@@ -179,6 +179,7 @@ class PsfOnCameraOptimizer():
         #saturation_reached = self._check_pixel_saturation_on_camera(array_image)
         return array_image
     
+    # This automatic function has many issues
     def compute_zernike_coeff2optimize_psf(self,
                                         list_of_starting_coeffs_in_meters,
                                         max_amp = 200e-9,
@@ -189,11 +190,39 @@ class PsfOnCameraOptimizer():
         best_coeffs = initial_coeffs
         
         for idx in range(num_of_coeffs):
-            j = idx +2
+            j = idx + 2
             print('Turn j = %d'%j)
             best_coeffs[idx] = self._estimate_coeff(idx, best_coeffs, min_amp, max_amp)
             print('\tBest coeff found = %g'%best_coeffs[idx])
         return best_coeffs
+    
+    def search_zernike_coeff2optimize_psf(self, j_idx, amp_span_in_meters, init_coeff_in_meters):
+        
+        Npoints = len(amp_span_in_meters)
+        peaks = np.zeros(Npoints)
+        coeffs = init_coeff_in_meters
+        self.set_slm_flat()
+        j_index = j_idx - 2
+        t_exp = 0.125
+        Nframe2average = 40
+        
+        for idx, amp in enumerate(amp_span_in_meters):
+            coeffs[j_index] = amp
+            self._write_zernike_on_slm(
+                zernike_coefficients_in_meters = coeffs,
+                add_wfc = True)
+            self._cam.setExposureTime(0.125)
+            image = self.get_image_from_camera(Nframe2average)
+            peaks[idx] = self._get_intensity_peak(image)
+        
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(amp_span_in_meters, peaks, 'ko', label = 'texp= %g ms'%t_exp)
+        plt.xlabel('$c_{%d} [m]$'%j_idx)
+        plt.ylabel('Peak Intensity')
+        plt.grid()
+        plt.legend(loc='best') 
+        
     
     def show_psf_comparison_wrt_slm_flat(self,
                                          z_coeff_list_in_meters,

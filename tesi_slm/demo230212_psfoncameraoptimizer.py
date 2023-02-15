@@ -1,4 +1,4 @@
-from prove_su_slm import  psf_on_camera_optimizer
+from tesi_slm import  psf_on_camera_optimizer
 import numpy as np 
 import pysilico
 

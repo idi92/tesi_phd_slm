@@ -2,7 +2,7 @@ import numpy as np
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
 import pysilico
-from prove_su_slm import display_center
+from tesi_slm import display_center
 
 
 #from plico_dm import deformableMirror

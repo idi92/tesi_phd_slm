@@ -3,6 +3,7 @@ from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
 import pysilico
 from tesi_slm import display_center
+from astropy.io import fits
 
 
 #from plico_dm import deformableMirror
@@ -17,6 +18,8 @@ class PsfOnCameraOptimizer():
     # TODO: estimate camera linearity and the choose proper parameters
     DEFAULT_MAX_INTENSITY = 3000
     INTENSITY_TRESHOLD = 0.97
+    DEFAULT_BG_DIR = 'C:/Users/labot/Desktop/misure_tesi_slm/230216'
+    DEFAULT_BG_FNAME = '/230216backgroung_camera.fits'
     
     def __init__(self, camera, slm):
         self._cam = camera
@@ -25,6 +28,7 @@ class PsfOnCameraOptimizer():
         self._width = self._mirror.getWidthInPixels()
         self._mirror_shape = (self._height, self._width)
         self._build_defalut_circular_mask()
+        self._back_ground = None
     
     def _build_defalut_circular_mask(self):
         radius_in_pixel = self._height // 2 - 5
@@ -83,7 +87,7 @@ class PsfOnCameraOptimizer():
                             zernike_coefficients_in_meters = coeffs,
                             add_wfc = True)
                         self._cam.setExposureTime(texp)
-                        image = self.get_image_from_camera(
+                        image = self.get_mean_image_from_camera(
                             frame_to_avarage = 30)
                         
                         peaks[k] = self._get_intensity_peak(image)
@@ -153,7 +157,9 @@ class PsfOnCameraOptimizer():
         # TO DO: try to oversample and interpolate?
         idx_list_y = np.where(np.abs(cut_image/cut_image.max())>=0.80)[0]
         idx_list_x = np.where(np.abs(cut_image/cut_image.max())>=0.80)[1]
+        
         image_peak = cut_image[idx_list_y, idx_list_x].mean()
+        
         x_mean = np.mean(xmax-1 + idx_list_x)
         y_mean = np.mean(ymax-1 + idx_list_y)
         return image_peak, y_mean, x_mean 
@@ -170,7 +176,7 @@ class PsfOnCameraOptimizer():
         return saturation_status
             
     
-    def get_image_from_camera(self,
+    def get_mean_image_from_camera(self,
                               frame_to_avarage = 30):
         # TODO : check pixel  saturation and change exptime
         #self._cam.setExposureTime(exp_time_in_millisec)
@@ -179,7 +185,48 @@ class PsfOnCameraOptimizer():
         #saturation_reached = self._check_pixel_saturation_on_camera(array_image)
         return array_image
     
-    # This automatic function has many issues
+    def load_camera_background(self, fname):
+        header = fits.getheader(fname)
+        hduList = fits.open(fname)
+        self._back_ground = hduList[0].data
+        sigma_back_ground = hduList[1].data
+        
+        num_of_frames = header['N_AV_FR']
+        self._texp_bg = header['T_EX_MS']
+        
+    
+    def get_frames_from_camera(self, NumOfFrames = 100):
+        image = self._cam.getFutureFrames(NumOfFrames)
+        array_image = image.toNumpyArray() 
+        return array_image
+    
+    def get_mean_and_std_from_frames(self, image):
+        mean_ima = image.mean(axis = 2)
+        sigma_ima = image.std(axis = 2)
+        return mean_ima, sigma_ima
+    
+    def _subtract_background_from_image(self, mean_image):
+        tmp = mean_image - self._back_ground
+        sub_ima = tmp - np.median(tmp) 
+        return sub_ima
+    
+    def _get_mean_peak_and_error_from_image(self, mean_ima, sigma_ima):
+        imax = mean_ima.max()
+        ymax, xmax = np.where(mean_ima==imax)[0][0], np.where(mean_ima==imax)[1][0]
+        cut_image = mean_ima[ymax-1:ymax+2, xmax-1:xmax+2]
+        # TO DO: try to oversample and interpolate?
+        idx_list_y = np.where(np.abs(cut_image/cut_image.max())>=0.80)[0]
+        idx_list_x = np.where(np.abs(cut_image/cut_image.max())>=0.80)[1]
+        
+        Npix = len(idx_list_x)
+        
+        mean_peak = cut_image[idx_list_y, idx_list_x].mean()
+        cut_err_image = sigma_ima[ymax-1:ymax+2, xmax-1:xmax+2]
+        sig2=cut_err_image[idx_list_y, idx_list_x]**2
+        err_peak = np.sqrt(sig2.sum()/(Npix*Npix))
+        return mean_peak, err_peak
+     
+    # This automatic function has many issues :(
     def compute_zernike_coeff2optimize_psf(self,
                                         list_of_starting_coeffs_in_meters,
                                         max_amp = 200e-9,
@@ -197,37 +244,48 @@ class PsfOnCameraOptimizer():
         return best_coeffs
     
     def search_zernike_coeff2optimize_psf(self, j_idx, amp_span_in_meters, init_coeff_in_meters):
-        
+        if self._back_ground is None:
+            bg_fname = self.DEFAULT_BG_DIR + self.DEFAULT_BG_FNAME
+            self.load_camera_background(bg_fname)
         Npoints = len(amp_span_in_meters)
         peaks = np.zeros(Npoints)
+        err_peaks = np.zeros(Npoints)
         coeffs = init_coeff_in_meters
         self.set_slm_flat()
         j_index = j_idx - 2
-        t_exp = 0.125
-        Nframe2average = 40
-        
+        t_exp = self._texp_bg #0.125ms
+        Nframe2average = 100
+    
         for idx, amp in enumerate(amp_span_in_meters):
             coeffs[j_index] = amp
             self._write_zernike_on_slm(
                 zernike_coefficients_in_meters = coeffs,
                 add_wfc = True)
             self._cam.setExposureTime(0.125)
-            image = self.get_image_from_camera(Nframe2average)
-            peaks[idx] = self._get_intensity_peak(image)
+            image = self.get_frames_from_camera(Nframe2average)
+            image_mean, image_sigma = self.get_mean_and_std_from_frames(image)
+            ima_sub_bg = self._subtract_background_from_image(image_mean)
+            
+            peaks[idx], err_peaks[idx] = \
+            self._get_mean_peak_and_error_from_image(ima_sub_bg, image_sigma)
+            #peaks[idx] = self._get_intensity_peak(image)
         
         import matplotlib.pyplot as plt
         plt.figure()
         plt.plot(amp_span_in_meters, peaks, 'ko', label = 'texp= %g ms'%t_exp)
+        plt.errorbar(amp_span_in_meters, peaks , err_peaks, ls=None,
+                     fmt='.', markersize=0.5, label='$\sigma$')
         plt.xlabel('$c_{%d} [m]$'%j_idx)
         plt.ylabel('Peak Intensity')
         plt.grid()
         plt.legend(loc='best') 
         
     
+    
     def show_psf_comparison_wrt_slm_flat(self,
                                          z_coeff_list_in_meters,
                                          texp_in_ms = 1,
-                                         Nframe2average = 30,
+                                         Nframe2average = 100,
                                          add_wfc = True):
         self._cam.setExposureTime(exposureTimeInMilliSeconds = texp_in_ms)
         self.set_slm_flat(add_wfc = add_wfc)
@@ -238,6 +296,7 @@ class PsfOnCameraOptimizer():
             add_wfc = add_wfc)
         ima = self._cam.getFutureFrames(1, Nframe2average)
         zernike_image = ima.toNumpyArray()
+        zernike_image = self._subtract_background_from_image(zernike_image)
         import matplotlib.pyplot as plt
         plt.subplots(1, 2, sharex=True, sharey=True)
         plt.subplot(1, 2, 1)

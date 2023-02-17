@@ -224,7 +224,9 @@ class PsfOnCameraOptimizer():
         cut_err_image = sigma_ima[ymax-1:ymax+2, xmax-1:xmax+2]
         sig2=cut_err_image[idx_list_y, idx_list_x]**2
         err_peak = np.sqrt(sig2.sum()/(Npix*Npix))
-        return mean_peak, err_peak
+        mean_xmax_coord = ((xmax-1)+idx_list_x).mean()
+        mean_ymax_coord = ((ymax-1)+idx_list_y).mean()
+        return mean_peak, err_peak, mean_xmax_coord, mean_ymax_coord
      
     # This automatic function has many issues :(
     def compute_zernike_coeff2optimize_psf(self,
@@ -255,18 +257,17 @@ class PsfOnCameraOptimizer():
         j_index = j_idx - 2
         t_exp = self._texp_bg #0.125ms
         Nframe2average = 100
-    
+        self._cam.setExposureTime(0.125)
         for idx, amp in enumerate(amp_span_in_meters):
             coeffs[j_index] = amp
             self._write_zernike_on_slm(
                 zernike_coefficients_in_meters = coeffs,
                 add_wfc = True)
-            self._cam.setExposureTime(0.125)
             image = self.get_frames_from_camera(Nframe2average)
             image_mean, image_sigma = self.get_mean_and_std_from_frames(image)
             ima_sub_bg = self._subtract_background_from_image(image_mean)
             
-            peaks[idx], err_peaks[idx] = \
+            peaks[idx], err_peaks[idx],xm,ym = \
             self._get_mean_peak_and_error_from_image(ima_sub_bg, image_sigma)
             #peaks[idx] = self._get_intensity_peak(image)
         

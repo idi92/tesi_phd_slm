@@ -1,7 +1,7 @@
 import pysilico
 import numpy as np
 from astropy.io import fits
-import os
+
 
 def main():
     cam = pysilico.camera('localhost', 7100)
@@ -12,8 +12,8 @@ def main():
     bg = bg_ima.toNumpyArray()
     bg_mean = bg.mean(axis=2)
     bg_sigma = bg.std(axis=2)
-    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230216'
-    fname = '/230216backgroung_camera.fits'
+    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230217'
+    fname = '/230217bg_camera.fits'
     #fpath = os.path.join(fdir, fname)
     fpath = fdir + fname
     hdr = fits.Header()
@@ -23,7 +23,6 @@ def main():
     fits.append(fpath, bg_sigma)
     
     import matplotlib.pyplot as plt
-    plt.figure()
     plt.subplots(1, 2, sharex=True, sharey=True)
     plt.subplot(1, 2, 1)
     plt.title('mean background')

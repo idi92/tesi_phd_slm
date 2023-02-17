@@ -1,7 +1,7 @@
 from tesi_slm import  psf_on_camera_optimizer
 import numpy as np 
 import pysilico
-
+# NOT CORRECT, JUST TO FIGURE OUT SOME DOUBTS
 def main():
     cam, mirror = psf_on_camera_optimizer.create_devices()
     poco = psf_on_camera_optimizer.PsfOnCameraOptimizer(cam, mirror)

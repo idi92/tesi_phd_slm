@@ -10,6 +10,7 @@ def main():
     fname = '/230217bg_camera.fits'
     fname_bg = fdir + fname
     poco.load_camera_background(fname_bg)
+    poco.change_circular_mask(centerYX=(576,960), RadiusInPixel=555)
     
     coeff = [0, 0, -230e-9, -80e-9, 140e-9, -30e-9, -20e-9, 0, 0, -30e-9]
     poco._write_zernike_on_slm(coeff)
@@ -36,4 +37,13 @@ def main():
     hdr['N_AV_FR'] = Nframes
     fits.writeto(fnamepsf, psf_mean, hdr)
     fits.append(fnamepsf, psf_err)
-    
+
+def load_psf(psf_fname):
+    header = fits.getheader(psf_fname)
+    hduList = fits.open(psf_fname)
+    psf_mean = hduList[0].data
+    psf_err = hduList[1].data
+        
+    Nframes = header['N_AV_FR']
+    texp = header['T_EX_MS']
+    return psf_mean, psf_err, Nframes, texp

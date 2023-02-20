@@ -1,16 +1,18 @@
 import numpy as np
 from tesi_slm import psf_on_camera_optimizer
 from tesi_slm import demo230217_fit_psf
+from astropy.io import fits
 
 def main():
     
     cam, mirror = psf_on_camera_optimizer.create_devices()
     poco = psf_on_camera_optimizer.PsfOnCameraOptimizer(cam, mirror)
     # loading bg noise to subtract
-    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230217'
-    fname = '/230217bg_camera.fits'
+    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230220'
+    fname = '/230220bg_camera.fits'
     fname_bg = fdir + fname
     poco.load_camera_background(fname_bg)
+    poco.change_circular_mask(centerYX=(576,960), RadiusInPixel=555)
     texp = poco._texp_bg  #0.125ms
     Nframes = 100
     # in c2_span must be 0e-9
@@ -61,6 +63,17 @@ def main():
     observed_psf_deltaX = x_peaks[idx_c]- x_peaks     
     observed_psf_deltaY = y_peaks[idx_c] - y_peaks
     
+    tiltfname = fdir + '/230220_measured_tilts.fits'
+    hdr = fits.Header()
+    hdr['T_EX_MS'] = texp
+    hdr['N_AV_FR'] = Nframes
+    fits.writeto(tiltfname, expecetd_psf_deltaX, hdr)
+    fits.append(tiltfname, observed_psf_deltaX)
+    fits.append(tiltfname, x_err)
+    fits.append(tiltfname, expecetd_psf_deltaY)
+    fits.append(tiltfname, observed_psf_deltaY)
+    fits.append(tiltfname, y_err)
+    
     import matplotlib.pyplot as plt
     plt.figure()
     plt.title('along x')
@@ -77,10 +90,23 @@ def main():
     plt.plot(c2_span, expecetd_psf_deltaY, 'r--', label = 'expected')
     plt.plot(c2_span, observed_psf_deltaY, 'bx', label = 'measured')
     plt.errorbar(c2_span, observed_psf_deltaY , y_err, ls=None,
-                     fmt='.', markersize=0.5, label='$\sigma$')
+                     fmt='.', markersize = 0.5, label='$\sigma$')
     plt.xlabel('$c_2[m]$')
     plt.ylabel('$\delta_{pixels}$')
     plt.grid()
     plt.legend()
     poco.close_slm()
     return  observed_psf_deltaX, observed_psf_deltaY, expecetd_psf_deltaX, expecetd_psf_deltaY
+
+def load_tilted_psf_data(fname):
+    header = fits.getheader(fname)
+    hduList = fits.open(fname)
+    exp_dx = hduList[0].data
+    obs_dx = hduList[1].data
+    err_x = hduList[2].data
+    exp_dy = hduList[3].data
+    obs_dy = hduList[4].data
+    err_y = hduList[5].data
+    Nframes = header['N_AV_FR']
+    texp = header['T_EX_MS']
+    return exp_dx, obs_dx, err_x, exp_dy, obs_dy, err_y, Nframes, texp

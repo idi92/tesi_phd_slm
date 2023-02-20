@@ -41,7 +41,7 @@ class PsfOnCameraOptimizer():
     
     def change_circular_mask(self,
                             centerYX = (576, 960),
-                            RadiusInPixel = 540):
+                            RadiusInPixel = 555):
         cmask = CircularMask(
             frameShape = (self._height, self._width),
             maskRadius = RadiusInPixel,

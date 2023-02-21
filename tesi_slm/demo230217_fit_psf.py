@@ -1,16 +1,12 @@
-'''
-Created on 17 Feb 2023
 
-@author: labot
-'''
 import numpy as np
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from astropy.modeling.functional_models import Gaussian2D
-from PIL.ImageOps import fit
 
 
-def gaussian_fit(image, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
+
+def gaussian_fit(image, err_im, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
     dimy, dimx = image.shape
     y, x = np.mgrid[:dimy, :dimx]
     fitter = LevMarLSQFitter(calc_uncertainties=True)
@@ -18,24 +14,26 @@ def gaussian_fit(image, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
                        x_mean=x_mean, y_mean=y_mean,
                        x_stddev=fwhm_x * gaussian_fwhm_to_sigma,
                        y_stddev=fwhm_y * gaussian_fwhm_to_sigma)
-    fit = fitter(model, x, y, image)
+    fit = fitter(model, x, y, image, weights = err_im)
     return fit
 
 def main():
     from tesi_slm import demo230217_measure_and_save_psf
-    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230217'
-    psf_fname = '/230217psf_bg_sub_0125ms_1000frames.fits'
+    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230221'
+    psf_fname = '/230221psf_itercoeffsearch_bg_sub_0125ms_1000frames.fits'
     psf_data = demo230217_measure_and_save_psf.load_psf(fdir+psf_fname)
     
     psf = psf_data[0]
+    err_psf = psf_data[1]
     import matplotlib.pyplot as plt
     plt.figure()
     plt.imshow(psf, cmap='jet');plt.colorbar();
     
     fit = gaussian_fit(
         image = psf,
-        x_mean = 785,
-        y_mean = 628,
+        err_im= err_psf,
+        x_mean = 671,
+        y_mean = 504,
         fwhm_x = 3,
         fwhm_y = 3,
         amplitude = psf.max())
@@ -52,4 +50,4 @@ def main():
     print(par)
     print(err)
     
-    return psf_data, fit
+    return psf_data, err_psf, fit

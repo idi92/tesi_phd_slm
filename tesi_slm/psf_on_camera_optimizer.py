@@ -31,7 +31,7 @@ class PsfOnCameraOptimizer():
         self._back_ground = None
     
     def _build_defalut_circular_mask(self):
-        radius_in_pixel = self._height // 2 - 5
+        radius_in_pixel = 555
         centerYX = (self._height // 2, self._width // 2)
         cmask = CircularMask(
             frameShape = (self._height, self._width),

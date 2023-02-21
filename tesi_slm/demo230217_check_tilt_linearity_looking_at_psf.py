@@ -52,7 +52,7 @@ def main():
         peak, err_peak, x_p, y_p = \
             poco._get_mean_peak_and_error_from_image(ima_sub_bg, image_sigma)
         fit_res = demo230217_fit_psf.gaussian_fit(
-            ima_sub_bg, x_p, y_p, 4, 4, peak)
+            ima_sub_bg, image_sigma, x_p, y_p, 4, 4, peak)
         
         x_peaks[idx],y_peaks[idx] = fit_res.x_mean.value, fit_res.y_mean.value
         sigmas = np.sqrt(np.diag(fit_res.cov_matrix.cov_matrix))
@@ -63,7 +63,7 @@ def main():
     observed_psf_deltaX = x_peaks[idx_c]- x_peaks     
     observed_psf_deltaY = y_peaks[idx_c] - y_peaks
     
-    tiltfname = fdir + '/230220_measured_tilts.fits'
+    tiltfname = fdir + '/230220_measured_tilts_with_weights.fits'
     hdr = fits.Header()
     hdr['T_EX_MS'] = texp
     hdr['N_AV_FR'] = Nframes
@@ -73,6 +73,7 @@ def main():
     fits.append(tiltfname, expecetd_psf_deltaY)
     fits.append(tiltfname, observed_psf_deltaY)
     fits.append(tiltfname, y_err)
+    fits.append(tiltfname, c2_span)
     
     import matplotlib.pyplot as plt
     plt.figure()
@@ -96,7 +97,7 @@ def main():
     plt.grid()
     plt.legend()
     poco.close_slm()
-    return  observed_psf_deltaX, observed_psf_deltaY, expecetd_psf_deltaX, expecetd_psf_deltaY
+    return  observed_psf_deltaX, observed_psf_deltaY, expecetd_psf_deltaX, expecetd_psf_deltaY, c2_span
 
 def load_tilted_psf_data(fname):
     header = fits.getheader(fname)
@@ -107,6 +108,7 @@ def load_tilted_psf_data(fname):
     exp_dy = hduList[3].data
     obs_dy = hduList[4].data
     err_y = hduList[5].data
+    c2_span = hduList[6].data
     Nframes = header['N_AV_FR']
     texp = header['T_EX_MS']
     return exp_dx, obs_dx, err_x, exp_dy, obs_dy, err_y, Nframes, texp

@@ -12,8 +12,8 @@ def main():
     bg = bg_ima.toNumpyArray()
     bg_mean = bg.mean(axis=2)
     bg_sigma = bg.std(axis=2)
-    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230220'
-    fname = '/230220bg_camera.fits'
+    fdir = 'C:/Users/labot/Desktop/misure_tesi_slm/230221'
+    fname = '/230221bg_camera.fits'
     #fpath = os.path.join(fdir, fname)
     fpath = fdir + fname
     hdr = fits.Header()

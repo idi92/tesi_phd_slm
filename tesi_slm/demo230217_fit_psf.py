@@ -14,7 +14,7 @@ def gaussian_fit(image, err_im, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
                        x_mean=x_mean, y_mean=y_mean,
                        x_stddev=fwhm_x * gaussian_fwhm_to_sigma,
                        y_stddev=fwhm_y * gaussian_fwhm_to_sigma)
-    fit = fitter(model, x, y, image, weights = err_im)
+    fit = fitter(model, x, y, z = image, weights = 1/err_im)
     return fit
 
 def main():

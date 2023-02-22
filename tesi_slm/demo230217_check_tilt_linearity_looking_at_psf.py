@@ -31,7 +31,7 @@ def main():
     # writing on slm a almost good psf
     # zernike coefficients estimated as in
     # demo230215_manual_search_of_best_psf.py 
-    coeff = [0, 0, -230e-9, -80e-9, 140e-9, -30e-9, -20e-9, 0, 0, -30e-9]
+    coeff = [0, 0, -2.25e-07, -1e-08, 1.1e-07, -7e-08, 3e-08, 0, 0, -4.5e-08]
     poco._write_zernike_on_slm(
                              zernike_coefficients_in_meters = coeff,
                              add_wfc = True)
@@ -52,7 +52,7 @@ def main():
         peak, err_peak, x_p, y_p = \
             poco._get_mean_peak_and_error_from_image(ima_sub_bg, image_sigma)
         fit_res = demo230217_fit_psf.gaussian_fit(
-            ima_sub_bg, image_sigma, x_p, y_p, 4, 4, peak)
+            ima_sub_bg, image_sigma, x_p, y_p, 3, 3, peak)
         
         x_peaks[idx],y_peaks[idx] = fit_res.x_mean.value, fit_res.y_mean.value
         sigmas = np.sqrt(np.diag(fit_res.cov_matrix.cov_matrix))
@@ -62,18 +62,6 @@ def main():
     # note: c2 < 0 generates dpos >0 on focal plane
     observed_psf_deltaX = x_peaks[idx_c]- x_peaks     
     observed_psf_deltaY = y_peaks[idx_c] - y_peaks
-    
-    tiltfname = fdir + '/230220_measured_tilts_with_weights.fits'
-    hdr = fits.Header()
-    hdr['T_EX_MS'] = texp
-    hdr['N_AV_FR'] = Nframes
-    fits.writeto(tiltfname, expecetd_psf_deltaX, hdr)
-    fits.append(tiltfname, observed_psf_deltaX)
-    fits.append(tiltfname, x_err)
-    fits.append(tiltfname, expecetd_psf_deltaY)
-    fits.append(tiltfname, observed_psf_deltaY)
-    fits.append(tiltfname, y_err)
-    fits.append(tiltfname, c2_span)
     
     import matplotlib.pyplot as plt
     plt.figure()
@@ -97,6 +85,19 @@ def main():
     plt.grid()
     plt.legend()
     poco.close_slm()
+    
+    tiltfname = fdir + '/230222_measured_tilts_with_weights.fits'
+    hdr = fits.Header()
+    hdr['T_EX_MS'] = texp
+    hdr['N_AV_FR'] = Nframes
+    fits.writeto(tiltfname, expecetd_psf_deltaX, hdr)
+    fits.append(tiltfname, observed_psf_deltaX)
+    fits.append(tiltfname, x_err)
+    fits.append(tiltfname, expecetd_psf_deltaY)
+    fits.append(tiltfname, observed_psf_deltaY)
+    fits.append(tiltfname, y_err)
+    fits.append(tiltfname, c2_span)
+    
     return  observed_psf_deltaX, observed_psf_deltaY, expecetd_psf_deltaX, expecetd_psf_deltaY, c2_span
 
 def load_tilted_psf_data(fname):

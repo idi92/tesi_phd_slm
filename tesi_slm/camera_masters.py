@@ -1,0 +1,71 @@
+import numpy as np 
+from astropy.io import fits
+
+class CameraMastersMeasurer():
+    
+    def __init__(self, camera):
+        self._cam = camera
+        #self._cam_shape = camera.shape()
+    
+    def acquire_images(self, Nframes = 100, texp_in_ms = 0.125):
+        
+        self._texp = texp_in_ms
+        self._Nframes = Nframes
+        self._cam.setExposureTime(self._texp)
+        cube = self._cam.getFutureFrames(Nframes, 1) 
+        self._cube_images = cube.toNumpyArray()
+    
+    def save_master(self, fname, tag = 'Dark'):
+        hdr = fits.Header()
+        hdr['MAST'] = tag
+        hdr['T_EX_MS'] = self._texp
+        hdr['N_FR'] = self._Nframes
+        fits.writeto(fname,self._cube_images, hdr)
+    
+    @staticmethod
+    def load_master(fname):
+        header = fits.getheader(fname)
+        hduList = fits.open(fname)
+        cube_images = hduList[0].data 
+        Nframes = header['N_FR']
+        texp = header['T_EX_MS']
+        tag = header['MAST']
+        return tag, texp, Nframes, cube_images
+
+class CameraMastersAnalyser():
+    
+    def __init__(self, fname_dark, fname_bg):
+        self._tag_dark, self._texp_dark, self._Nframes_darks, \
+         self._cube_darks = CameraMastersMeasurer.load_master(fname_dark)
+        self._tag_bg, self._texp_bgs, self._Nframes_bgs, \
+         self._cube_bgs = CameraMastersMeasurer.load_master(fname_bg)
+    
+    def compute_master_dark(self):
+        self._master_dark = np.median(self._cube_darks, axis = 2)
+        
+    def compute_masters_background(self):
+        #frame_shape = self._cube_bgs.shape[:2]
+        #self._master_background = np.zeros(frame_shape)
+        tmp_master = np.zeros(self._cube_bgs.shape)
+        for idx in range(self._Nframes_bgs):
+            tmp_master[:, :, idx]  = self._cube_bgs[:,:,idx] - self._master_dark
+        self._master_background = np.median(tmp_master, axis = 2)
+    
+    def save_camera_masters(self, fname):
+        hdr = fits.Header()
+        #hdr['MAST'] = tag
+        hdr['T_EX_MS'] = self._texp
+        hdr['N_FR'] = self._Nframes
+        fits.writeto(fname, self._master_dark, hdr)
+        fits.append(fname, self._master_background)
+    
+    @staticmethod
+    def load_camera_masters(fname):
+        header = fits.getheader(fname)
+        hduList = fits.open(fname)
+        master_dark = hduList[0].data 
+        master_background = hduList[1].data 
+        Nframes = header['N_FR']
+        texp = header['T_EX_MS']
+        #tag = header['MAST']
+        return texp, Nframes, master_dark, master_background

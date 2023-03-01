@@ -32,18 +32,27 @@ class CameraMastersMeasurer():
         tag = header['MAST']
         return tag, texp, Nframes, cube_images
 
-class CameraMastersAnalyser():
+class CameraMastersAnalyzer():
     
     def __init__(self, fname_dark, fname_bg):
         self._tag_dark, self._texp_dark, self._Nframes_darks, \
          self._cube_darks = CameraMastersMeasurer.load_master(fname_dark)
         self._tag_bg, self._texp_bgs, self._Nframes_bgs, \
          self._cube_bgs = CameraMastersMeasurer.load_master(fname_bg)
+        err_message1 = 'Dark and Background must be measured with the same texp!'
+        assert self._texp_dark == self._texp_bgs, err_message1
+        err_message2 = 'Dark and Background must be measured with the same Nframes!'
+        assert self._Nframes_bgs == self._Nframes_darks, err_message2
+        self._texp = self._texp_dark
     
-    def compute_master_dark(self):
+    def compute_masters(self):
+        self._compute_master_dark()
+        self._compute_master_background()
+        
+    def _compute_master_dark(self):
         self._master_dark = np.median(self._cube_darks, axis = 2)
         
-    def compute_masters_background(self):
+    def _compute_master_background(self):
         #frame_shape = self._cube_bgs.shape[:2]
         #self._master_background = np.zeros(frame_shape)
         tmp_master = np.zeros(self._cube_bgs.shape)
@@ -55,7 +64,7 @@ class CameraMastersAnalyser():
         hdr = fits.Header()
         #hdr['MAST'] = tag
         hdr['T_EX_MS'] = self._texp
-        hdr['N_FR'] = self._Nframes
+        hdr['N_FR'] = self._Nframes_darks
         fits.writeto(fname, self._master_dark, hdr)
         fits.append(fname, self._master_background)
     

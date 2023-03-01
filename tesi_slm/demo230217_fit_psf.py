@@ -15,7 +15,7 @@ def gaussian_fit(image, err_im, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
                        x_stddev=fwhm_x * gaussian_fwhm_to_sigma,
                        y_stddev=fwhm_y * gaussian_fwhm_to_sigma)
     fit = fitter(model, x, y, z = image, weights = 1/err_im)
-    return fit
+    return fit, model
 
 def main():
     from tesi_slm import demo230217_measure_and_save_psf

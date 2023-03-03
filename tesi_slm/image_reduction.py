@@ -70,8 +70,9 @@ class AnalyzeCleanImages():
                            x_mean=x_mean, y_mean=y_mean,
                            x_stddev=fwhm_x * gaussian_fwhm_to_sigma,
                            y_stddev=fwhm_y * gaussian_fwhm_to_sigma)
-        fit = fitter(model, x, y, z = image, weights = 1/err_im)
-        return fit, model
+        w = 1/err_im
+        fit = fitter(model, x, y, z = image, weights = w)
+        return fit
     
     def _get_image_peak_and_coords(self, image):
         peak = image.max()
@@ -89,7 +90,7 @@ class AnalyzeCleanImages():
         #err_ima = self._cut_image_around_max(self._std_ima, ymax, xmax)
         image = self._mean_ima
         err_ima = self._std_ima
-        fit, model = self._gaussian_fit(image, err_ima, xmax, ymax, 4, 4, imax)
+        fit = self._gaussian_fit(image, err_ima, xmax, ymax, 4, 4, imax)
         fit
         fit.cov_matrix
         par = fit.parameters

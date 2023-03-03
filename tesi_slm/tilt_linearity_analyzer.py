@@ -25,7 +25,7 @@ class TiltedPsfAnalyzer():
         fit = fitter(model, x, y, image)
         return fit
     
-    def _weighted_gaussian_fit(self, image, err_ima, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
+    def _weighted_gaussian_fit(self, image, err_ima, x_mean, y_mean, fwhm_x , fwhm_y, amplitude):
         dimy, dimx = image.shape
         y, x = np.mgrid[:dimy, :dimx]
         fitter = LevMarLSQFitter(calc_uncertainties=True)
@@ -46,7 +46,7 @@ class TiltedPsfAnalyzer():
         cut_image = image[ymax-2:ymax+3, xmax-2:xmax+3]
         return cut_image
     
-    def compute_tilted_psf_displacement(self, fwhm_x = 3, fwhm_y = 3, method ='fbyf'):
+    def compute_tilted_psf_displacement(self, fwhm_x = 3.3 , fwhm_y=3.3 , method ='fbyf'):
         
         Ntilts = len(self._c_span)
         Nframes = self._Nframes
@@ -55,7 +55,8 @@ class TiltedPsfAnalyzer():
         self._err_x = np.zeros(Ntilts)
         self._err_y = np.zeros(Ntilts)
         
-        if(method=='fbyf'):
+        if(method == 'fbyf'):
+            print('method:%s'% method)
             for idx in range(Ntilts):
                 
                 yk = np.zeros(Nframes)
@@ -67,8 +68,8 @@ class TiltedPsfAnalyzer():
                     peak, yc, xc = self._get_image_peak_and_coords(image)
                     cut_image = self._cut_image_around_max(image, yc, xc)
                     
-                    # center of the image_cut (3x3) [1,1]
-                    fit = self._gaussian_fit(cut_image, 1, 1, fwhm_x, fwhm_y, peak)
+                    # center of the image_cut (5x5) [2,2]
+                    fit = self._gaussian_fit(cut_image, 2, 2, fwhm_x, fwhm_y, peak)
                     par = fit.parameters
                     xk[k_idx] = par[1] + xc
                     yk[k_idx] = par[2] + yc
@@ -78,23 +79,31 @@ class TiltedPsfAnalyzer():
                 self._x_mean[idx] = xk.mean()
                 self._err_x[idx] = xk.std()
                 
-        if(method=='collapse'):
+        if(method =='collapse'):
+            print('method:%s'%method)
             collapsed_images = self._images_4d.mean(axis=3)
             collapsed_errima = self._images_4d.std(axis=3)
             for idx in range(Ntilts):
                 image = collapsed_images[idx]
                 peak, yc, xc = self._get_image_peak_and_coords(image)
-                cut_image = self._cut_image_around_max(image, yc, xc)  
-                # center of the image_cut (3x3) [1,1]
-                err_ima = collapsed_errima[idx, yc-2:yc+3, xc-2:xc+3] 
-                fit = self._weighted_gaussian_fit(cut_image, err_ima, 1, 1, fwhm_x, fwhm_y, peak)
+                err_ima = collapsed_errima[idx]
+                fit = self._weighted_gaussian_fit(image, err_ima, xc, yc, fwhm_x, fwhm_y, peak)
                 par = fit.parameters
                 #print(fit.parameters)
                 #print(fit.cov_matrix)
                 err = np.sqrt(np.diag(fit.cov_matrix.cov_matrix))
-                self._y_mean[idx] = par[2] + yc
+                # conversion from sigma to FWHM 
+                par[3] = par[3]/gaussian_fwhm_to_sigma
+                err[3] = err[3]/gaussian_fwhm_to_sigma
+                par[3] = par[4]/gaussian_fwhm_to_sigma
+                err[4] = err[4]/gaussian_fwhm_to_sigma 
+                print('best fit results: amp, x_mean, y_mean, fwhm_x, fwhm_y')
+                print('tilted psf #%d'%idx)
+                print(par)
+                print(err)
+                self._y_mean[idx] = par[2] 
                 self._err_y[idx] = err[2]
-                self._x_mean[idx] = par[1] + xc
+                self._x_mean[idx] = par[1] 
                 self._err_x[idx] = err[1]
             
         idx_c = np.where(self._c_span == 0)[0][0]

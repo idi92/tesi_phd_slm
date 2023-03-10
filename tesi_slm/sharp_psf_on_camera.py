@@ -87,6 +87,35 @@ class SharpPsfOnCamera():
         best_coeff = coeff2apply    
         return best_coeff
     
+    def sharp_sensorlessAO(self, j_index_to_explore, c_span , texp_ms=0.125, init_coeff = None):
+        explore_jnoll = np.array(j_index_to_explore)
+        #N_of_jnoll = len(explore_jnoll)
+        if init_coeff is None:
+            init_coeff = np.zeros(10)
+        
+        Namp = len(c_span)
+           
+        coeff2apply = init_coeff
+        
+        self.set_slm_flat()
+        self._cam.setExposureTime(texp_ms)
+        Nframes = 30
+        
+        for j in explore_jnoll:
+            peaks = np.zeros(Namp)
+            for idx_c, cj in enumerate(c_span):
+                #starting from z2 up to z11
+                k = int(j - 2)
+                coeff2apply[k] = cj
+                self._write_zernike_on_slm(coeff2apply)
+                image = self.get_mean_image(Nframes)
+                peaks[idx_c] = image.std()
+            max_idx = self._get_max_index(peaks)
+            coeff2apply[k] = c_span[max_idx]
+        
+        best_coeff = coeff2apply    
+        return best_coeff
+    
     def _get_max_index(self, array1D):
         max_val = array1D.max()
         idx = np.where(array1D == max_val)[0][0]

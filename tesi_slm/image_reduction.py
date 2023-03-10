@@ -71,7 +71,7 @@ class AnalyzeCleanImages():
                            x_stddev=fwhm_x * gaussian_fwhm_to_sigma,
                            y_stddev=fwhm_y * gaussian_fwhm_to_sigma)
         w = 1/err_im
-        fit = fitter(model, x, y, z = image, weights = w)
+        fit = fitter(model, x, y, z = image)
         return fit
     
     def _get_image_peak_and_coords(self, image):
@@ -86,19 +86,24 @@ class AnalyzeCleanImages():
     
     def execute_Gaussianfitting(self):
         imax, ymax, xmax = self._get_image_peak_and_coords(self._mean_ima)
+        imm = self._cut_image_around_max(self._mean_ima, ymax, xmax, 50)
+        imax, ymax_cut, xmax_cut = self._get_image_peak_and_coords(imm)
         #image = self._cut_image_around_max(self._mean_ima, ymax, xmax)
         #err_ima = self._cut_image_around_max(self._std_ima, ymax, xmax)
-        image = self._mean_ima
-        err_ima = self._std_ima
-        fit = self._gaussian_fit(image, err_ima, xmax, ymax, 4, 4, imax)
-        fit
+        #image = self._mean_ima
+        #image = imm
+        #err_ima = self._std_ima
+        err_ima = self._cut_image_around_max(self._std_ima, ymax, xmax, 50)
+        # assert imm.shape == err_ima.shape
+        fit = self._gaussian_fit(imm, err_ima, xmax_cut, ymax_cut, 3.3, 3.3, imax)
+        self._fit = fit
         fit.cov_matrix
         par = fit.parameters
         err = np.sqrt(np.diag(fit.cov_matrix.cov_matrix))
         # ricorda di convertire da sigma a FWHM su x e y
-        par[3] = par[3]/gaussian_fwhm_to_sigma
-        err[3] = err[3]/gaussian_fwhm_to_sigma
-        par[3] = par[4]/gaussian_fwhm_to_sigma
+        par[3] = par[3]/gaussian_fwhm_to_sigma 
+        err[3] = err[3]/gaussian_fwhm_to_sigma 
+        par[4] = par[4]/gaussian_fwhm_to_sigma
         err[4] = err[4]/gaussian_fwhm_to_sigma 
         self._par = par
         self._err = err

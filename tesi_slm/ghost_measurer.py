@@ -23,11 +23,11 @@ class MeasureGhost():
             print('iter %d'%t)
             self._spoc.set_slm_flat()
             flat_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
-            clean_flat = self._get_clean_mean_image(flat_ima)
+            self._clean_flat = self._get_clean_mean_image(flat_ima)
             
             self._spoc._write_zernike_on_slm([7000e-9])
             tilt_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
-            clean_tilt = self._get_clean_mean_image(tilt_ima)
+            self._clean_tilt = self._get_clean_mean_image(tilt_ima)
             
             flat_roi = self._cut_image_around_coord(clean_flat, 574, 461)
             mod_roi = self._cut_image_around_coord(clean_tilt, 573, 375)
@@ -76,6 +76,27 @@ class MeasureGhost():
         texp = header['T_EX_MS']
         return texp, angle, data
     
+    def show_plots(self):
+        import matplotlib.pyplot as plt
+        plt.subplots(1, 2, sharex=True, sharey=True)
+        plt.subplot(1, 2, 1)
+        plt.title('tilt')
+        plt.imshow(self._clean_tilt, cmap = 'jet')
+        plt.colorbar()
+        plt.subplot(1, 2, 2)
+        plt.title('flat')
+        plt.imshow(self._clean_flat, cmap = 'jet')
+        plt.colorbar()
+        
+        plt.figure()
+        plt.title('ghost')
+        plt.imshow(self._ghost_roi, cmap = 'jet')
+        plt.colorbar()
+        plt.figure()
+        plt.title('roi')
+        plt.imshow(self._tilt_roi, cmap = 'jet')
+        plt.colorbar()    
+    
 class AnalyzeGhostRatio():
     
     def __init__(self, angles, fdir):
@@ -87,14 +108,22 @@ class AnalyzeGhostRatio():
         self._mod_err  = np.zeros(Nangles)
         
         for n in range(Nangles):
-            fname = fdir+'/230310ge_ang'+'%d.fits'%angles[n]
+            fname = fdir+'/230315gm_ang'+'%d.fits'%angles[n]
             texp, angle, data = MeasureGhost.load(fname)
             self._rot_angle[n] = angle
             self._ghost_mean[n] = data[0]
             self._ghost_err[n] = data[1]
             self._mod_mean[n] = data[2]
             self._mod_err[n] = data[3]
-    
+            
+    def print_estimated_values(self):
+        for idx in range(len(self._rot_angle)):
+            print('\nangle %g'%self._rot_angle[idx]) 
+            print('Imod:', self._mod_mean[idx], self._mod_err[idx])
+            print('Ighost:',self._ghost_mean[idx],self._ghost_err[idx])
+            I = self._mod_mean[idx]+self._ghost_mean[idx]
+            errI = np.sqrt(self._mod_err[idx]**2+self._ghost_err[idx]**2)
+            print('Itot:',I, errI) 
     def show_ratio(self):        
         import matplotlib.pyplot as plt
         plt.subplots(2,1,sharex=True)
@@ -102,13 +131,13 @@ class AnalyzeGhostRatio():
         plt.plot(self._rot_angle, self._ghost_mean, 'bo-', label = 'ghost ratio')
         plt.errorbar(self._rot_angle, self._ghost_mean, self._ghost_err, fmt='.b')
         plt.xlabel('angle [deg]')
-        plt.ylabel('$<\Sigma ghost(x_i,y_j)_{roi}> / <\Sigma flat(x_i, y_j)_{roi}>$')
+        plt.ylabel('$<I_{ghost}> / <I_{flat}>$')
         plt.legend(loc='best')
         plt.grid(ls ='--', alpha = 0.5)
         plt.subplot(2,1,2)
         plt.plot(self._rot_angle, self._mod_mean, 'ro-', label = 'mod ratio')
         plt.errorbar(self._rot_angle, self._mod_mean, self._mod_err, fmt='.r')
         plt.xlabel('angle [deg]')
-        plt.ylabel('$<\Sigma modulated(x_i,y_j)_{roi}> / <\Sigma flat(x_i, y_j)_{roi}>$')
+        plt.ylabel('$<I_{modulated}> / <I_{flat}>$')
         plt.legend(loc='best')
         plt.grid(ls ='--', alpha = 0.5)

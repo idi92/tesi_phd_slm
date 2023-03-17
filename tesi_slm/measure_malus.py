@@ -10,6 +10,10 @@ class MeasureIntensity():
         self._texp, self._fNframes, \
          self._master_dark, self._master_background = \
          CameraMastersAnalyzer.load_camera_masters(fname_masters)
+         
+    def set_roi_coords(self, yc_flat, xc_flat):
+        self._yc_flat =  yc_flat
+        self._xc_flat = xc_flat
     
     def iterate_measure_for_angle(self, angle, N_iter=100):
         self._angle = angle
@@ -21,8 +25,8 @@ class MeasureIntensity():
             flat_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
             clean_flat, err = self._get_clean_mean_image(flat_ima)
             #peak, ymax, xmax = self._get_image_peak_and_coords(clean_flat)
-            roi = self._cut_image_around_coord(clean_flat, 574, 461)
-            err_roi = self._cut_image_around_coord(err, 574, 461)
+            roi = self._cut_image_around_coord(clean_flat, self._yc_flat, self._xc_flat)
+            err_roi = self._cut_image_around_coord(err, self._yc_flat, self._xc_flat)
             self._I_roi_val = roi.sum()
             self._I_err = np.sqrt((err_roi**2).sum())
               

@@ -10,6 +10,12 @@ class MeasureGhost():
         self._texp, self._fNframes, \
          self._master_dark, self._master_background = \
          CameraMastersAnalyzer.load_camera_masters(fname_masters)
+         
+    def set_roi_coords(self, yc_flat, xc_flat, yc_tilt, xc_tilt):
+        self._yc_flat =  yc_flat
+        self._xc_flat = xc_flat
+        self._yc_tilt = yc_tilt
+        self._xc_tilt = xc_tilt
     
     def iterate_measure_for_angle(self, angle, N_iter=100):
         
@@ -29,9 +35,9 @@ class MeasureGhost():
             tilt_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
             self._clean_tilt = self._get_clean_mean_image(tilt_ima)
             
-            flat_roi = self._cut_image_around_coord(clean_flat, 574, 461)
-            mod_roi = self._cut_image_around_coord(clean_tilt, 573, 375)
-            ghost_roi = self._cut_image_around_coord(clean_tilt, 574, 461)
+            flat_roi = self._cut_image_around_coord(self._clean_flat, self._yc_flat, self._xc_flat)
+            mod_roi = self._cut_image_around_coord(self._clean_tilt, self._yc_tilt, self._xc_tilt)
+            ghost_roi = self._cut_image_around_coord(self._clean_tilt, self._yc_flat, self._xc_flat)
             ghost_ratio_values[t] = ghost_roi.sum()/flat_roi.sum()
             mod_ratio_values[t] = mod_roi.sum()/flat_roi.sum()
             

@@ -7,6 +7,7 @@ from tesi_slm import display_center
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from astropy.modeling.functional_models import Gaussian2D
+from tesi_slm.camera_masters import CameraMastersAnalyzer
 #from astropy.io import fits
 
 
@@ -18,13 +19,17 @@ def create_devices():
 
 class SharpPsfOnCamera():
     
-    def __init__(self, camera, slm):
+    def __init__(self, camera, slm, fname_masters = None):
         self._cam = camera
         self._mirror = slm
         self._height = self._mirror.getHeightInPixels()
         self._width = self._mirror.getWidthInPixels()
         self._mirror_shape = (self._height, self._width)
         self._build_defalut_circular_mask()
+        if fname_masters is not None:
+            self._texp, self._fNframes, \
+            self._master_dark, self._master_background = \
+            CameraMastersAnalyzer.load_camera_masters(fname_masters)
         
     def _build_defalut_circular_mask(self):
         radius_in_pixel = 555
@@ -116,15 +121,75 @@ class SharpPsfOnCamera():
         best_coeff = coeff2apply    
         return best_coeff
     
+    def _cut_image_around_coord(self, image, yc, xc):
+        cut_image = image[yc-25:yc+25, xc-25:xc+25]
+        return cut_image
+    
+    def select_sharpening_roi(self, yc, xc):
+        self._yc_roi =  yc
+        self._xc_roi = xc
+    
+    def sharp_in_roi(self, j_index_to_explore, c_span , init_coeff = None, method = 'max'):
+        explore_jnoll = np.array(j_index_to_explore)
+        #N_of_jnoll = len(explore_jnoll)
+        if init_coeff is None:
+            init_coeff = np.zeros(10)
+        
+        if method == 'max':
+            merit_function = self._get_max_image
+        if method == 'std':
+            merit_function = np.std
+        Namp = len(c_span)
+           
+        coeff2apply = init_coeff.copy()
+        
+        self.set_slm_flat()
+        self._cam.setExposureTime(self._texp)
+        Nframes = 30
+        self._merit_par = np.zeros((10, Namp))
+        for j in explore_jnoll:
+            #peaks = np.zeros(Namp)
+            for idx_c, cj in enumerate(c_span):
+                #starting from z2 up to z11
+                k = int(j - 2)
+                coeff2apply[k] = cj
+                self._write_zernike_on_slm(coeff2apply)
+                image = self._cam.getFutureFrames(Nframes, 1).toNumpyArray()
+                mean_image = self._get_mean_clean_image(image)
+                image_roi = self._cut_image_around_coord(mean_image, self._yc_roi, self._xc_roi)
+                self._merit_par[k, idx_c] = merit_function(image_roi)
+            max_idx = self._get_max_index(self._merit_par[k])
+            coeff2apply[k] = c_span[max_idx]
+        
+        best_coeff = coeff2apply    
+        return best_coeff
+    
+    def show_metric_par_plot(self, c_span, j_index_to_explore):
+        explore_jnoll = np.array(j_index_to_explore)
+        import matplotlib.pyplot as plt
+        plt.figure()
+        for j in explore_jnoll:
+            k = int(j-2)
+            plt.plot(c_span, self._merit_par[k],'o-',label='j=%d'%j)
+        plt.xlabel('$c_j [m]$')
+        plt.ylabel('merit value')
+        plt.grid(ls='--',alpha = 0.4)
+        plt.legend(loc='best')
+        
+    def _get_mean_clean_image(self, image):
+        cam_shape = self._cam.shape()
+        Nframes = image.shape[-1]
+        cube_image = np.zeros((cam_shape[0],cam_shape[1], Nframes))
+        for n in range(Nframes):
+            cube_image[:, :, n] = image[:,:,n] - self._master_background \
+                 - self._master_dark
+        return cube_image.mean(axis=-1)
+    
     def _get_max_index(self, array1D):
         max_val = array1D.max()
         idx = np.where(array1D == max_val)[0][0]
         return idx
     
-    # def _get_image_peak_and_coords(self, image):
-    #     peak = image.max()
-    #     ymax, xmax = np.where(image==peak)[0][0], np.where(image==peak)[1][0]
-    #     return peak, ymax, xmax
     
     def _gaussian_fit(self, image, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
         dimy, dimx = image.shape

@@ -27,7 +27,7 @@ class SharpPsfOnCamera():
         self._mirror_shape = (self._height, self._width)
         self._build_defalut_circular_mask()
         if fname_masters is not None:
-            self._texp, self._fNframes, \
+            self._texp_master, self._fNframes, \
             self._master_dark, self._master_background = \
             CameraMastersAnalyzer.load_camera_masters(fname_masters)
         
@@ -41,8 +41,8 @@ class SharpPsfOnCamera():
         self._cmask_obj = cmask
     
     def change_circular_mask(self,
-                            centerYX = (576, 960),
-                            RadiusInPixel = 555):
+                            centerYX = (550, 853),
+                            RadiusInPixel = 569):
         cmask = CircularMask(
             frameShape = (self._height, self._width),
             maskRadius = RadiusInPixel,
@@ -52,18 +52,35 @@ class SharpPsfOnCamera():
     def reset_default_circular_mask(self):
         self._build_defalut_circular_mask()
         
-    def _write_zernike_on_slm(self,
-                             zernike_coefficients_in_meters, add_wfc = True):
+    def _create_opd_map_from_zernike_coeff(
+            self, zernike_coefficients_in_meters):
+        '''
+        
+        to be used with slm.setZonalCommand to apply a given surface
+        deformation expressed in Zernike coefficients
+        
+        Returns
+        -------
+        image_to_display: numpy.array
+            map of wavefront corresponding to the given Zernike coefficients
+        '''
         zernike_builder = ZernikeGenerator(self._cmask_obj)
         image_to_display = np.zeros(self._mirror_shape)
+        image_to_display = np.ma.array(data = image_to_display, mask = self._cmask_obj.mask())
         for j, aj in enumerate(zernike_coefficients_in_meters):
             Zj = zernike_builder.getZernike(j + 2)
             image_to_display += aj * Zj
+        return image_to_display
+        
+    def _write_zernike_on_slm(self,
+                             zernike_coefficients_in_meters, add_wfc = True):
+        image_to_display = self._create_opd_map_from_zernike_coeff(
+            zernike_coefficients_in_meters)
         self._mirror.setZonalCommand(
             zonalCommand = image_to_display,
             add_correction = add_wfc)
         
-    def sharp(self, j_index_to_explore, c_span , texp_ms=0.125, init_coeff = None):
+    def sharp_TRASHME(self, j_index_to_explore, c_span , texp_ms=0.125, init_coeff = None):
         explore_jnoll = np.array(j_index_to_explore)
         #N_of_jnoll = len(explore_jnoll)
         if init_coeff is None:
@@ -92,7 +109,7 @@ class SharpPsfOnCamera():
         best_coeff = coeff2apply    
         return best_coeff
     
-    def sharp_sensorlessAO(self, j_index_to_explore, c_span , texp_ms=0.125, init_coeff = None):
+    def sharp_sensorlessAO_TRASHME(self, j_index_to_explore, c_span , texp_ms=0.125, init_coeff = None):
         explore_jnoll = np.array(j_index_to_explore)
         #N_of_jnoll = len(explore_jnoll)
         if init_coeff is None:
@@ -129,9 +146,15 @@ class SharpPsfOnCamera():
         self._yc_roi =  yc
         self._xc_roi = xc
     
-    def sharp_in_roi(self, j_index_to_explore, c_span , init_coeff = None, method = 'max'):
+    def sharp_in_roi(self, j_index_to_explore, c_span , texp_in_ms,  init_coeff = None, method = 'max'):
         explore_jnoll = np.array(j_index_to_explore)
-        #N_of_jnoll = len(explore_jnoll)
+        N_of_jnoll = len(explore_jnoll)
+        
+        assert explore_jnoll.max() <= 11, 'The sharpening function works only'\
+        'up to j =11, avoiding piston j=1'
+        assert N_of_jnoll <= 10, 'The sharpening function works only'\
+        'up to j =11, avoiding piston j=1. Input length %d expected <=10'%N_of_jnoll
+            
         if init_coeff is None:
             init_coeff = np.zeros(10)
         
@@ -140,7 +163,12 @@ class SharpPsfOnCamera():
         if method == 'std':
             merit_function = np.std
         Namp = len(c_span)
-           
+        
+        self._texp = texp_in_ms
+        if(self._texp != self._texp_master):
+            print('WARNING: the selected exposure time (%g ms) is different from the '\
+                  'one used to measure dark and background (%g ms)'\
+                  %(self._texp, self._texp_master))
         coeff2apply = init_coeff.copy()
         
         self.set_slm_flat()
@@ -191,7 +219,7 @@ class SharpPsfOnCamera():
         return idx
     
     
-    def _gaussian_fit(self, image, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
+    def _gaussian_fitTRASHME(self, image, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
         dimy, dimx = image.shape
         y, x = np.mgrid[:dimy, :dimx]
         fitter = LevMarLSQFitter(calc_uncertainties=True)
@@ -202,7 +230,7 @@ class SharpPsfOnCamera():
         fit = fitter(model, x, y, image)
         return fit
     
-    def _weighted_gaussian_fit(self, image, err_ima, x_mean, y_mean, fwhm_x , fwhm_y, amplitude):
+    def _weighted_gaussian_fitTRASHME(self, image, err_ima, x_mean, y_mean, fwhm_x , fwhm_y, amplitude):
         dimy, dimx = image.shape
         y, x = np.mgrid[:dimy, :dimx]
         fitter = LevMarLSQFitter(calc_uncertainties=True)

@@ -19,7 +19,7 @@ class GhostEraser():
         clean_flat = ima_flat - bg
         #clean_flat[clean_flat<0] = 0
         
-        self._spoc._write_zernike_on_slm([7000e-9])
+        self._spoc.write_zernike_on_slm([7000e-9])
         tilt_ima = self._spoc._cam.getFutureFrames(1, 30).toNumpyArray()
         bg = tilt_ima[tilt_ima < bg_threshold].mean()
         clean_tilt = tilt_ima - bg

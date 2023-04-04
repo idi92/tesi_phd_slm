@@ -7,13 +7,13 @@ from astropy.io import fits
 
 
 #from plico_dm import deformableMirror
-def create_devices():
+def create_devicesTRASHME():
     camera = pysilico.camera('localhost', 7100)
     pippo = display_center.Main230123()
     slm = pippo._mirror
     return camera, slm
 
-class PsfOnCameraOptimizer():
+class PsfOnCameraOptimizerTRASHME():
     DEFAULT_EXPTIME_MILLISEC = 2
     # TODO: estimate camera linearity and the choose proper parameters
     DEFAULT_MAX_INTENSITY = 3000

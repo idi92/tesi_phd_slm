@@ -13,6 +13,12 @@ def get_index_from_image(image2D, value = None):
             value = image2D.max()
         y, x = np.where(image2D==value)[0][0], np.where(image2D==value)[1][0]
         return y, x
+    
+def get_index_from_array(array1D, value = None):
+    if value is None:
+        value = array1D.max()
+    idx = np.where(array1D == value)[0][0]
+    return idx
 
 def _gaussian_fit(image, err_im, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
         dimy, dimx = image.shape
@@ -56,3 +62,9 @@ def clean_cube_images(cube_image, master_dark, master_background):
         image = cube_image[:, :, n]
         clean_cube[:, :, n] = clean_image(image, master_dark, master_background)
     return clean_cube.mean(axis = 2)
+
+def reshape_map2vector(array2d, length = 2211840, method ='C'):
+    return np.reshape(array2d, (length,), method)
+
+def reshape_vector2map(vector, shape = [1152, 1920], method ='C'):
+    return np.reshape(vector, (shape[0], shape[1]), method)

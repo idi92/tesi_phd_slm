@@ -31,7 +31,7 @@ class MeasureGhost():
             flat_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
             self._clean_flat = self._get_clean_mean_image(flat_ima)
             
-            self._spoc._write_zernike_on_slm([7000e-9])
+            self._spoc.write_zernike_on_slm([7000e-9])
             tilt_ima = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
             self._clean_tilt = self._get_clean_mean_image(tilt_ima)
             

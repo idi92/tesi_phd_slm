@@ -6,7 +6,7 @@ import numpy as np
 import pysilico
 #from scipy.fftpack import fftshift, ifftshift, fft2, ifft2
 
-class Main230123():
+class Main230123TRASHME():
     
     BLINK_DIR_ROOT = 'C:\Program Files\Meadowlark Optics\Blink OverDrive Plus'
     LUT_FNAME = '\LUT Files\slm6208_635_PCIe.LUT'

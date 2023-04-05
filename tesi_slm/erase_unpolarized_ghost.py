@@ -2,7 +2,7 @@ import numpy as np
 #from tesi_slm.sharp_psf_on_camera import create_devices, SharpPsfOnCamera
 from astropy.io import fits 
 
-class GhostEraser():
+class GhostEraserTRASHME():
     
     def __init__(self, spoc):
         #cam, mirror = create_devices()
@@ -119,7 +119,7 @@ class GhostEraser():
         plt.imshow(self._tilt_roi, cmap = 'jet')
         plt.colorbar()
 
-class AnalyzeGhostRatio():
+class AnalyzeGhostRatioTRASHME():
     
     def __init__(self, angles, fdir):
         Nangles = len(angles)

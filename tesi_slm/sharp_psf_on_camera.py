@@ -87,10 +87,10 @@ class SharpPsfOnCamera():
         explore_jnoll = np.array(j_index_to_explore)
         N_of_jnoll = len(explore_jnoll)
         
-        assert explore_jnoll.max() <= 11, 'The sharpening function works only'\
-        ' up to j =11, avoiding piston j=1'
-        assert N_of_jnoll <= 10, 'The sharpening function works only'\
-        ' up to j =11, avoiding piston j=1. Input length %d expected <=10'%N_of_jnoll
+        assert explore_jnoll.max() <= 28, 'The sharpening function works only'\
+        ' up to j =28, avoiding piston j=1'
+        assert N_of_jnoll <= 27, 'The sharpening function works only'\
+        ' up to j =28, avoiding piston j=1. Input length %d expected <=27'%N_of_jnoll
             
         if init_coeff is None:
             init_coeff = np.zeros(10)
@@ -112,7 +112,7 @@ class SharpPsfOnCamera():
         self.set_slm_flat()
         self._cam.setExposureTime(self._texp)
         Nframes =  Nframe2average
-        self._merit_par = np.zeros((10, Namp))
+        self._merit_par = np.zeros((27, Namp))
         for j in explore_jnoll:
             
             for idx_c, cj in enumerate(c_span):

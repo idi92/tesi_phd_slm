@@ -1,19 +1,30 @@
 import numpy as np 
 from astropy.io import fits
-from tesi_slm import psf_on_camera_optimizer
 from tesi_slm.camera_masters import CameraMastersAnalyzer
-
+from tesi_slm.my_tools import clean_cube_images
 class TiltedPsfMeasurer():
     
     FRAMES_PER_TILT = 100
     
-    def __init__(self):
-        cam, mirror = psf_on_camera_optimizer.create_devices()
-        self._poco = psf_on_camera_optimizer.PsfOnCameraOptimizer(cam, mirror)
-        self._cam = cam
+    def __init__(self, spoc, fname_masters=None):
+        self._spoc = spoc
+        self._cam = spoc._cam
+        self._spoc.load_masters(fname_masters)
+        self._texp_master = self._spoc._texp_master
+        self._master_dark = self._spoc._master_dark
+        self._master_background = self._spoc._master_background
     
-    def measure_tilted_psf(self, j, c_span, texp = 0.125, init_coeff = None):
+    def change_cmask(self, centerYX = (550, 853), RadiusInPixel = 569):
+        self._spoc.change_circular_mask(centerYX, RadiusInPixel)
+        
+    def measure_tilted_psf(self, j, c_span, texp = 0.125, NframeXtilt = 10, init_coeff = None):
         self._texp = texp
+        self.FRAMES_PER_TILT = NframeXtilt
+        if(self._texp != self._texp_master):
+            print('WARNING: the selected exposure time (t_exp = %g ms) is different from the '\
+                  'one used to measure dark and background (t_m = %g ms)\n'\
+                  'NOTE: if t_m = 0s, image reduction is not performed.'
+                  %(self._texp, self._texp_master))
         self._j_noll_idx = j
         self._c_span = c_span
         j_index = j - 2
@@ -24,19 +35,19 @@ class TiltedPsfMeasurer():
         self._init_coeff = np.array(init_coeff)
         
         Nmodes = len(c_span)
-        self._poco._write_zernike_on_slm(init_coeff)
+        self._spoc.write_zernike_on_slm(init_coeff)
         coeff = init_coeff.copy()
         
         
         frame_shape = self._cam.shape()
-        self._images_4d = np.zeros((Nmodes, frame_shape[0],frame_shape[1],self.FRAMES_PER_TILT))
+        self._images_3d = np.zeros((Nmodes, frame_shape[0],frame_shape[1]))#,self.FRAMES_PER_TILT))
         self._cam.setExposureTime(texp)
         
         for idx, amp in enumerate(c_span):
-            coeff[j_index] = amp
-            self._poco._write_zernike_on_slm(coeff)
-            self._images_4d[idx] = self._poco.get_frames_from_camera(
-                NumOfFrames = self.FRAMES_PER_TILT)
+            coeff[j_index] = amp + init_coeff[j_index]
+            self._spoc.write_zernike_on_slm(coeff)
+            cube_ima = self._cam.getFutureFrames(self.FRAMES_PER_TILT).toNumpyArray()
+            self._images_3d[idx] = clean_cube_images(cube_ima, self._master_dark, self._master_background)
         
             
     def save_measures(self, fname):
@@ -45,25 +56,25 @@ class TiltedPsfMeasurer():
         hdr['N_AV_FR'] = self.FRAMES_PER_TILT
         hdr['Z_J'] = self._j_noll_idx
          
-        fits.writeto(fname, self._images_4d, hdr)
+        fits.writeto(fname, self._images_3d, hdr)
         
         fits.append(fname, self._c_span)
-        fits.append(fname,self._init_coeff)
+        fits.append(fname, self._init_coeff)
         
     @staticmethod    
     def load_measures(fname):
         header = fits.getheader(fname)
         hduList = fits.open(fname)
-        images_4d = hduList[0].data
+        images_3d = hduList[0].data
         c_span = hduList[1].data
         init_coeff = hduList[2].data
             
         Nframes = header['N_AV_FR']
         texp = header['T_EX_MS']
         j_noll = header['Z_J']
-        return images_4d, c_span, Nframes, texp, j_noll, init_coeff
+        return images_3d, c_span, Nframes, texp, j_noll, init_coeff
              
-class TiltedPsfReducer():
+class TiltedPsfReducerTRASHME():
         
     def __init__(self, tpm_fname, cma_fname):
         self._texp_masters, self._fNframes, \

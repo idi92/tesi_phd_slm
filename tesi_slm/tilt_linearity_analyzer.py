@@ -6,11 +6,11 @@ from astropy.modeling.functional_models import Gaussian2D
 from astropy.io import fits
 #from scipy.optimize import curve_fit
 
-class TiltedPsfAnalyzer():
+class TiltedPsfAnalyzerTRASHME():
     
     def __init__(self, fname):
         
-        self._images_4d, self._c_span, self._Nframes, self._texp,\
+        self._images_3d, self._c_span, self._Nframes, self._texp,\
          self._j_noll, self._init_coeff = TiltedPsfMeasurer.load_measures(fname)
          
          
@@ -225,7 +225,7 @@ class TiltedPsfAnalyzer():
         fits.append(fname, self._init_coeff)
         
         
-class ShowTiltedPsf():
+class ShowTiltedPsfTRASHME():
 
     def __init__(self, fname):
         self._observed_psf_deltaX, self._x_mean, self._err_x,\
@@ -381,7 +381,7 @@ class ShowTiltedPsf():
         return self._resX, self._resY, self._err_x, self._err_y, self._c_span
 
 
-class CompareDifferenceMethods():
+class CompareDifferenceMethodsTRASHME():
 
     def __init__(self, fname_col, fname_max, fname_5x5):
         self._stp_col = ShowTiltedPsf(fname_col)

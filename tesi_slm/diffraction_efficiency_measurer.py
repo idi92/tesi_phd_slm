@@ -8,14 +8,20 @@ class DiffractionEfficiencyMeasurer():
     
     def __init__(self, spoc, fname_masters):
         self._spoc = spoc
-        self._spoc.change_circular_mask(RadiusInPixel=1920*0.5)
-        self._texp, self._fNframes, \
+        self._spoc.change_circular_mask(centerYX=(550,853),RadiusInPixel=569)
+        self._texp_master, self._fNframes, \
          self._master_dark, self._master_background = \
          CameraMastersAnalyzer.load_camera_masters(fname_masters)
     
-    def measure_diffraction_efficiency(self, c_span, j = 2, N_iter = 10):
-        Nframes = 30
-        self._c_span = c_span 
+    def measure_diffraction_efficiency(self, c_span, texp, j = 2, N_iter = 10, half_side=25, init_coeff=None):
+        Nframes = 100
+        self._c_span = c_span
+        self._texp = texp
+        if(self._texp != self._texp_master):
+            print('WARNING: the selected exposure time (t_exp = %g ms) is different from the '\
+                  'one used to measure dark and background (t_m = %g ms)\n'\
+                  'NOTE: if t_m = 0s, image reduction is not performed.'
+                  %(self._texp, self._texp_master)) 
         self._spoc._cam.setExposureTime(self._texp)
         
         # self._spoc.set_slm_flat()
@@ -26,7 +32,9 @@ class DiffractionEfficiencyMeasurer():
         # I_total = cut_clean_flat.sum()
         # print('I_tot:%g'%I_total)
         #
-
+        if init_coeff is None:
+            self._init_coeff = np.zeros(2)
+        self._init_coeff = init_coeff
         N_amp = len(c_span)
         I_mod_values = np.zeros((N_amp, N_iter))
         I_ghost_values = np.zeros((N_amp, N_iter))
@@ -35,7 +43,8 @@ class DiffractionEfficiencyMeasurer():
         self._mean_ghost_ratio = np.zeros(N_amp)
         self._err_ghost_ratio = np.zeros(N_amp)
         
-        coeff2apply = np.zeros(2)
+        
+        coeff2apply = self._init_coeff.copy()
         tilt_idx = j - 2
         
         for c_idx in range(N_amp):
@@ -52,19 +61,19 @@ class DiffractionEfficiencyMeasurer():
                 if i == 0:
                     yf, xf = get_index_from_image(clean_flat, value = clean_flat.max())
                     
-                cut_clean_flat = cut_image_around_coord(clean_flat, yf, xf, halfside=25)
+                cut_clean_flat = cut_image_around_coord(clean_flat, yf, xf, halfside=half_side)
                 I_total = cut_clean_flat.sum()
                 print('I_tot:%g'%I_total)
                 
-                self._spoc._write_zernike_on_slm(coeff2apply)
+                self._spoc.write_zernike_on_slm(coeff2apply)
                 
                 tilt_cube = self._spoc._cam.getFutureFrames(Nframes).toNumpyArray()
                 clean_tilt = clean_cube_images(tilt_cube, self._master_dark, self._master_background)
                 if i == 0:                    
                     ym, xm = get_index_from_image(clean_tilt, value = clean_tilt.max())
                     
-                cut_clean_tilt = cut_image_around_coord(clean_tilt, ym, xm, halfside=25)
-                cut_clean_ghost = cut_image_around_coord(clean_tilt, yf, xf, halfside=25)
+                cut_clean_tilt = cut_image_around_coord(clean_tilt, ym, xm, halfside=half_side)
+                cut_clean_ghost = cut_image_around_coord(clean_tilt, yf, xf, halfside=half_side)
                 
                 I_mod_values[c_idx, i] = (cut_clean_tilt.sum())/I_total
                 I_ghost_values[c_idx, i] = (cut_clean_ghost.sum())/I_total

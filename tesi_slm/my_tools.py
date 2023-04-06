@@ -32,7 +32,7 @@ def _gaussian_fit(image, err_im, x_mean, y_mean, fwhm_x, fwhm_y, amplitude):
         fit = fitter(model, x, y, z = image)
         return fit
     
-def execute_gaussian_fit_on_image(cut_image, FWHMx, FWHMy):
+def execute_gaussian_fit_on_image(cut_image, FWHMx, FWHMy, print_par=True):
         ymax, xmax = get_index_from_image(cut_image)
         imax = cut_image.max()
         err_ima = 1 #self._cut_image_around_max(self._std_ima, ymax, xmax, 50)
@@ -46,10 +46,11 @@ def execute_gaussian_fit_on_image(cut_image, FWHMx, FWHMy):
         par[3] = par[3]/gaussian_fwhm_to_sigma 
         err[3] = err[3]/gaussian_fwhm_to_sigma 
         par[4] = par[4]/gaussian_fwhm_to_sigma
-        err[4] = err[4]/gaussian_fwhm_to_sigma 
-        print('best fit results: amp, x_mean, y_mean, fwhm_x, fwhm_y')
-        print(par)
-        print(err)
+        err[4] = err[4]/gaussian_fwhm_to_sigma
+        if print_par is True: 
+            print('best fit results: amp, x_mean, y_mean, fwhm_x, fwhm_y')
+            print(par)
+            print(err)
         return par, err
     
 def clean_image(image, master_dark, master_background):

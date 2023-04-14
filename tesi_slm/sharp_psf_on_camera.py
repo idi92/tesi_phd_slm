@@ -3,7 +3,7 @@ from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
 import pysilico
 from plico_dm import deformableMirror
-#from tesi_slm import display_center
+from astropy.io import fits
 from tesi_slm.camera_masters import CameraMastersAnalyzer
 from tesi_slm.my_tools import clean_cube_images,\
  cut_image_around_coord, get_index_from_array
@@ -85,6 +85,7 @@ class SharpPsfOnCamera():
     def sharp_in_roi(self, j_index_to_explore, c_span , texp_in_ms, Nframe2average=10,  init_coeff = None, method = 'max'):
         
         explore_jnoll = np.array(j_index_to_explore)
+        self._j_explored = explore_jnoll
         N_of_jnoll = len(explore_jnoll)
         
         assert explore_jnoll.max() <= 28, 'The sharpening function works only'\
@@ -94,12 +95,14 @@ class SharpPsfOnCamera():
             
         if init_coeff is None:
             init_coeff = np.zeros(10)
-        
+        self._init_coeff = init_coeff    
         if method == 'max':
             merit_function = self._get_max_image
         if method == 'std':
             merit_function = np.std
+        self._method = method
         Namp = len(c_span)
+        self._c_span = c_span
         
         self._texp = texp_in_ms
         if(self._texp != self._texp_master):
@@ -112,6 +115,7 @@ class SharpPsfOnCamera():
         self.set_slm_flat()
         self._cam.setExposureTime(self._texp)
         Nframes =  Nframe2average
+        self._Nframes = Nframes
         self._merit_par = np.zeros((27, Namp))
         for j in explore_jnoll:
             
@@ -127,7 +131,8 @@ class SharpPsfOnCamera():
             max_idx = get_index_from_array(self._merit_par[k], value = self._merit_par[k].max())
             coeff2apply[k] = c_span[max_idx]
         
-        best_coeff = coeff2apply    
+        best_coeff = coeff2apply
+        self._best_coeff = best_coeff   
         return best_coeff
     
     def plot_merit_values(self, c_span, j_index_to_explore):
@@ -163,4 +168,16 @@ class SharpPsfOnCamera():
     def get_number_of_slm_pixel(self):
         return self._mirror.get_number_of_actuators()
     
+    def save_sharp_coeffs(self, fname):
+        hdr = fits.Header()
+        hdr['T_EX_MS'] = self._texp
+        hdr['N_AV_FR'] = self._Nframes
+        hdr['MET'] = self._method
+        hdr['HS_ROI'] = self._halfside
+        
+        fits.writeto(fname, self._best_coeff,hdr)
+        fits.append(fname, self._c_span)
+        fits.append(fname, self._merit_par)
+        fits.append(fname, self._init_coeff)
+        fits.append(fname, self._j_explored)
     

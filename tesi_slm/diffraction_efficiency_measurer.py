@@ -20,6 +20,8 @@ class DiffractionEfficiencyMeasurer():
         self._texp = texp
         self._Niter = N_iter
         self._j_noll = j
+        self._c_span = c_span
+        self._half_size_roi = half_side
         if(self._texp != self._texp_master):
             print('WARNING: the selected exposure time (t_exp = %g ms) is different from the '\
                   'one used to measure dark and background (t_m = %g ms)\n'\
@@ -112,10 +114,12 @@ class DiffractionEfficiencyMeasurer():
         hdr['N_AV_FR'] = self._Nframes
         hdr['N_ITER'] = self._Niter
         hdr['Z_J'] = self._j_noll
-         
+        hdr['HS_ROI'] = self._half_size_roi
         fits.writeto(fname, self._mean_mod_ratio,hdr)
         
         fits.append(fname, self._err_mod_ratio)
         fits.append(fname, self._mean_ghost_ratio)
         fits.append(fname, self._err_ghost_ratio)
+        fits.append(fname, self._c_span)
         fits.append(fname, self._init_coeff)
+        

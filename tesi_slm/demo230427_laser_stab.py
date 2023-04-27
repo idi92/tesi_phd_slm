@@ -1,25 +1,33 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 from astropy.io import fits
-from tesi_slm import sharp_psf_on_camera
+import pysilico
+from tesi_slm.camera_masters import CameraMastersAnalyzer
 from tesi_slm import my_tools
+import time
 
 
-def main(fname, fname_masters, Nframes, texp):
-    cam, mirror  = sharp_psf_on_camera.create_devices()
-    best_coeff_std = np.array([ 0., 0., -4.e-08, -8.e-08, -8.e-08, -4.e-08,  4.e-08, 4.e-08,  0.,  0.])
-    #fname_masters = 'C:\\Users\\labot\\Desktop\\misure_tesi_slm\\230414\\230414cma_masters_0p035ms.fits'
-    spoc = sharp_psf_on_camera.SharpPsfOnCamera(cam,mirror,fname_masters)
-    spoc.change_circular_mask(centerYX=(550,853),RadiusInPixel=569)
-    spoc.write_zernike_on_slm(best_coeff_std)
+def main(fname, fname_masters, Nframes, texp, fwhm_dl=3.26, hs=25):
+    
+    texp_master, N_frames, master_dark, master_background = CameraMastersAnalyzer.load_camera_masters(fname_masters)
+    if(texp != texp_master):
+            print('WARNING: the selected exposure time (t_exp = %g ms) is different from the '\
+                  'one used to measure dark and background (t_m = %g ms)\n'\
+                  'NOTE: if t_m = 0s, image reduction is not performed.'
+                  %(texp, texp_master))
+    
+    cam = pysilico.camera('localhost', 7100)
     cam.setExposureTime(texp)
-    ima = cam.getFutureFrames(Nframes).toNumpyArray()
-    
-    
+    start_time = time.time()
+    ima = cam.getFutureFrames(Nframes)
+    end_time = time.time()
+    ima = ima.toNumpyArray()
+    dt = end_time - start_time
+    print('dt = %g s'%dt)
     clean_cube = np.zeros(ima.shape)
     for n in range(Nframes):
         image = ima[:, :, n]
-        clean_cube[:, :, n] = my_tools.clean_image(image, spoc._master_dark, spoc._master_background)
+        clean_cube[:, :, n] = my_tools.clean_image(image, master_dark, master_background)
     
     clean_ima = clean_cube.mean(axis = 2)
     
@@ -31,8 +39,8 @@ def main(fname, fname_masters, Nframes, texp):
     amps = np.zeros(Nframes)
     
     for n in range(Nframes):
-        cut_ima = my_tools.cut_image_around_coord(clean_cube[:,:,n], ymax, xmax, 25)
-        par, err = my_tools.execute_gaussian_fit_on_image(cut_ima, 3.26, 3.26, False)
+        cut_ima = my_tools.cut_image_around_coord(clean_cube[:,:,n], ymax, xmax, hs)
+        par, err = my_tools.execute_gaussian_fit_on_image(cut_ima, fwhm_dl, fwhm_dl, False)
         I[n] = cut_ima.sum()
         amps[n] = par[0]
         fwhm_x[n] = par[3]
@@ -48,7 +56,7 @@ def main(fname, fname_masters, Nframes, texp):
     plt.figure()
     plt.plot(fwhm_x, 'b.--', label = 'FWHM-x')
     plt.plot(fwhm_y, 'r.--', label = 'FWHM-y')
-    plt.hlines(3.26,0, Nframes,'k', '--', label = 'Diffraction limit')
+    plt.hlines(fwhm_dl,0, Nframes,'k', '--', label = 'Diffraction limit')
     plt.xlabel('Frames')
     plt.ylabel('FWHM [pixel]')
     plt.legend(loc='best')
@@ -66,5 +74,6 @@ def main(fname, fname_masters, Nframes, texp):
     fits.append(fname, fwhm_x)
     fits.append(fname, fwhm_y)
     fits.append(fname, amps)
+    fits.append(fname, np.array([dt,texp,Nframes]))
     
     return I, fwhm_x, fwhm_y, amps

@@ -77,3 +77,53 @@ def main(fname, fname_masters, Nframes, texp, fwhm_dl=3.26, hs=25):
     fits.append(fname, np.array([dt,texp,Nframes]))
     
     return I, fwhm_x, fwhm_y, amps
+
+def load_and_plot(fname_laser_stab):
+    data_file = fits.open(fname_laser_stab)
+    I = data_file[0].data
+    fwhm_x = data_file[1].data
+    fwhm_y = data_file[2].data
+    amps = data_file[3].data
+    dt, texp, Nframes = data_file[4].data
+    
+    plt.figure()
+    plt.plot(I, 'r.--', label = 'texp=%g ms'%texp)
+    plt.xlabel('Frames')
+    plt.ylabel('Counts in ROI [ADU]')
+    plt.legend(loc='best')
+    plt.grid('--',alpha=0.3)
+    
+    plt.figure()
+    plt.plot(fwhm_x, 'b.--', label = 'FWHM-x')
+    plt.plot(fwhm_y, 'r.--', label = 'FWHM-y')
+    #plt.hlines(fwhm_dl,0, Nframes,'k', '--', label = 'Diffraction limit')
+    plt.xlabel('Frames')
+    plt.ylabel('FWHM [pixel]')
+    plt.legend(loc='best')
+    plt.grid('--',alpha=0.3)
+    
+    plt.figure()
+    plt.plot(amps, 'm.--', label = 'texp=%g ms'%texp)
+    plt.xlabel('Frames')
+    plt.ylabel('Peak Amplitude [ADU]')
+    plt.legend(loc='best')
+    plt.grid('--',alpha=0.3)
+    
+    I_mean = I.mean()
+    I_err = I.std()
+    fwhm_x_mean = fwhm_x.mean()
+    fwhm_x_err = fwhm_x.std()
+    fwhm_y_mean = fwhm_y.mean()
+    fwhm_y_err = fwhm_y.std()
+    amps_mean = amps.mean()
+    amps_err = amps.std()
+    print('dt = %g s'%dt)
+    print('texp = %g ms' %texp)
+    print('Nframes = %d'%Nframes)
+    print('I = {} +/- {}  ADU'.format(I_mean,I_err))
+    print('FWHM-X = {} +/- {}  pixel'.format(fwhm_x_mean,fwhm_x_err))
+    print('FWHM-Y = {} +/- {}  pixel'.format(fwhm_y_mean,fwhm_y_err))
+    print('amp = {} +/- {}  ADU'.format(amps_mean,amps_err))
+    
+    return I, fwhm_x, fwhm_y, amps, dt, texp, Nframes
+    

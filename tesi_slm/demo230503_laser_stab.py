@@ -95,5 +95,31 @@ def main(fname, fname_masters, Npoints = 100, t_sleep = 30,  Nframes = 100, texp
     fits.append(fname, time_vector)
     fits.append(fname, dead_time)
     fits.append(fname, np.array([Npoints, t_sleep, Nframes, texp, fwhm_dl, hs]))
+    fits.append(fname, err_I)
+    fits.append(fname, err_fwhm_x)
+    fits.append(fname, err_fwhm_y)
+    fits.append(fname, err_amps)
+    return time_vector, I, err_I, fwhm_x,err_fwhm_x, fwhm_y,err_fwhm_y, amps,err_amps
     
-    return I, fwhm_x, fwhm_y, amps
+def load_and_plot(fname_laser_stab):
+    data_file = fits.open(fname_laser_stab)
+    I = data_file[0].data
+    fwhm_x = data_file[1].data
+    fwhm_y = data_file[2].data
+    amps = data_file[3].data
+    time_vector = data_file[4].data
+    dead_time = data_file[5].data
+    Npoints, t_sleep, Nframes, texp, fwhm_dl, hs = data_file[6].data
+    
+    try:
+        err_I = data_file[7].data
+        err_fwhm_x = data_file[8].data
+        err_fwhm_y = data_file[9].data
+        err_amps = data_file[10].data
+    except:
+        print('WORNING: err bars missing from data!')
+        return I, fwhm_x, fwhm_y, amps, time_vector, dead_time, data_file[6].data
+    
+    return I, fwhm_x, fwhm_y, amps, time_vector, dead_time, data_file[6].data, \
+        err_I, err_fwhm_x, err_fwhm_y, err_amps
+    

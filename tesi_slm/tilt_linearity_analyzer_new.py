@@ -114,19 +114,79 @@ class TiltedPsfAnalyzer():
         return x
     
     def execute_curve_fit(self):
-        y0, x0 = 658, 416
+        y0, x0 = self._pos_y[self._c_span == 0], self._pos_x[self._c_span == 0]
         d = np.sqrt((self._pos_x-x0)**2+(self._pos_y-y0)**2) 
         popt, pcov = curve_fit(
             self._func, 
             self._c_span + self._init_coeff[0],
             d,
             p0=[250e-3, 10.7e-3, 4.65e-6, 0],
-            bounds=([200e-3, 10.2e-3, 0, 0], [250e-3, 10.7e-3, 4.65e-6, d.max()]),
+            bounds=([200e-3, 10.5e-3, 0, 0], [250e-3, 10.7e-3, 4.65e-6, d.max()]),
             )
         return popt,pcov
     
     def _func(self, x , f, Dpe, pixel_pitch, offset):
         return 4*f*x/(Dpe*pixel_pitch) + offset
+    
+    def execite_linfit_along1axis(self):
+        y0, x0 = self._pos_y[self._c_span == 0], self._pos_x[self._c_span == 0]
+        c_span = self._c_span #np.delete(self._c_span, np.where(self._c_span == 0)[0][0])
+        #print(c_span)
+        if self._j_noll == 2 :
+            pos = self._pos_x #np.delete(self._pos_x, np.where(self._c_span == 0)[0][0])
+            err_pos = self._pos_x_err #np.delete(self._pos_x_err, np.where(self._c_span == 0)[0][0])
+            ref_pos = x0
+            
+        if self._j_noll == 3 :
+            pos = self._pos_y #np.delete(self._pos_y, np.where(self._c_span == 0)[0][0])
+            err_pos = self._pos_y_err #np.delete(self._pos_y_err, np.where(self._c_span == 0)[0][0])
+            ref_pos = y0
+            
+        obs_displacement = pos - ref_pos    
+        coeff, cov= np.polyfit(c_span, obs_displacement, 1, cov=True, full=False)
+        a,b = coeff
+        err_coeff = np.sqrt(cov.diagonal())
+        sigma_a = err_coeff[0]
+        fit_displacement = a * c_span + b
+        
+        exp_displacement = 4*c_span *250e-3/(10.7e-3*4.65e-6)
+        a_exp, b_exp = np.polyfit(c_span, -exp_displacement, 1)
+        err_lin = np.sqrt((sigma_a/a_exp)**2)
+        #err_pos = abs(obs_displacement + exp_displacement)
+        #print(err_pos)
+        chisq = np.sum(((obs_displacement - fit_displacement)**2/(err_pos)**2))
+       
+        redchi = chisq/(len(self._c_span)-1)
+        
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        plt.clf()
+        plt.subplots(2, 1, sharex=True)
+        plt.subplot(2,1,1)
+        plt.plot(c_span, obs_displacement, 'x',markersize=7, label='measured')
+        plt.plot(c_span, fit_displacement, 'r-', label='fit')
+        plt.plot(c_span, - exp_displacement, 'k--',label='expected')
+        plt.xlabel('$c_{%d} [m]$' %self._j_noll)
+        plt.ylabel('Displacement [pixel]')
+        plt.legend(loc = 'best')
+        plt.grid('--', alpha = 0.3)
+        plt.subplot(2,1,2)
+        plt.plot(c_span, obs_displacement + exp_displacement,'xb', label='obs - exp')
+        plt.plot(c_span, fit_displacement + exp_displacement,'xr' ,label='fit - exp')
+        plt.plot(c_span, obs_displacement - fit_displacement,'xk' ,label='obs - fit')
+        plt.legend(loc='best')
+        plt.ylabel('Difference [pixel]')
+        plt.xlabel('$c_{%d} [m]$' %self._j_noll)
+        plt.grid('--', alpha = 0.3)
+        
+        rms_diff_obs_minus_fit = (obs_displacement - fit_displacement).std()
+        lin_ratio = a/a_exp
+        return a, b, redchi, rms_diff_obs_minus_fit, lin_ratio, err_lin
+        
+        
+        
+        
+         
     
     # def show_tilt_desplacement(self, f = 250e-3, Dpe = 10.7e-3, pixel_size = 4.65e-6):
     #     sag = 4 * self._c_span

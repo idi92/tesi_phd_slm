@@ -3,6 +3,7 @@ from tesi_slm.tilt_linearity_on_camera import TiltedPsfMeasurer
 from tesi_slm.my_tools import cut_image_around_coord, \
     get_index_from_image, execute_gaussian_fit_on_image, get_index_from_array
 from scipy.optimize import curve_fit
+from astropy.units import pix
 
 class TiltedPsfAnalyzer():
     
@@ -167,22 +168,24 @@ class TiltedPsfAnalyzer():
         rms_diff_obs_minus_fit = (obs_displacement - fit_displacement).std()
         
         import matplotlib.pyplot as plt
+        pix_um = 4.65
+        scale = 1e-6 
         plt.subplots(2, 1, sharex=True)
         plt.subplot(2,1,1)
-        plt.plot(c_span, obs_displacement, 'x',markersize=7, label='measured')
-        plt.plot(c_span, fit_displacement, 'r-', label='fit')
-        plt.plot(c_span, - exp_displacement, 'k--',label='expected')
-        plt.xlabel('$c_{%d} [m]$' %self._j_noll)
-        plt.ylabel('Displacement [pixel]')
+        plt.plot(c_span/scale, obs_displacement*pix_um, 'x',markersize=7, label='measured')
+        plt.plot(c_span/scale, fit_displacement*pix_um, 'r-', label='fit')
+        plt.plot(c_span/scale, - exp_displacement*pix_um, 'k--',label='expected')
+        plt.xlabel('$c_{%d} [\mu m]$ rms' %self._j_noll)
+        plt.ylabel('Displacement $[\mu m]$')
         plt.legend(loc = 'best')
         plt.grid('--', alpha = 0.3)
         plt.subplot(2,1,2)
-        plt.plot(c_span, obs_displacement + exp_displacement,'xb', label='meas - exp')
-        plt.plot(c_span, fit_displacement + exp_displacement,'xr' ,label='fit - exp')
-        plt.plot(c_span, obs_displacement - fit_displacement,'xk' ,label='meas - fit')
+        plt.plot(c_span/scale, (obs_displacement + exp_displacement)*pix_um,'xb', label='meas - exp')
+        plt.plot(c_span/scale, (fit_displacement + exp_displacement)*pix_um,'xr' ,label='fit - exp')
+        plt.plot(c_span/scale, (obs_displacement - fit_displacement)*pix_um,'xk' ,label='meas - fit')
         plt.legend(loc='best')
-        plt.ylabel('Difference [pixel]')
-        plt.xlabel('$c_{%d} [m]$' %self._j_noll)
+        plt.ylabel('Difference $[\mu m]$')
+        plt.xlabel('$c_{%d} [\mu m]$ rms' %self._j_noll)
         plt.grid('--', alpha = 0.3)
                 
         return coeff,err_coeff, redchi, rms_diff_obs_minus_fit, slope_ratio, err_slope, R2

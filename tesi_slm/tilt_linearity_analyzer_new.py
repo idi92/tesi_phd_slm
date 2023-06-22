@@ -152,18 +152,21 @@ class TiltedPsfAnalyzer():
         
         exp_displacement = 4*c_span *250e-3/(10.7e-3*4.65e-6)
         a_exp, b_exp = np.polyfit(c_span, -exp_displacement, 1)
-        err_lin = np.sqrt((sigma_a/a_exp)**2)
+        #linearity goodness estimations
+        #slope ratio
+        slope_ratio = a/a_exp
+        err_slope = np.sqrt((sigma_a/a_exp)**2)
         #print(np.sqrt(((a_exp/a**2)*sigma_a)**2))
+        #R-squared
         R2 = np.sum((fit_displacement + exp_displacement)**2)/np.sum((obs_displacement+exp_displacement)**2)
+        #print(1-(np.sum((obs_displacement-fit_displacement)**2)/np.sum((obs_displacement+exp_displacement)**2)))
         print('R**2 = %g '%R2)
-        #err_pos = abs(obs_displacement + exp_displacement)
-        #print(err_pos)
+        
         chisq = np.sum(((obs_displacement - fit_displacement)**2/(err_pos)**2))
-       
         redchi = chisq/(len(self._c_span)-1)
+        rms_diff_obs_minus_fit = (obs_displacement - fit_displacement).std()
         
         import matplotlib.pyplot as plt
-        
         plt.subplots(2, 1, sharex=True)
         plt.subplot(2,1,1)
         plt.plot(c_span, obs_displacement, 'x',markersize=7, label='measured')
@@ -181,11 +184,8 @@ class TiltedPsfAnalyzer():
         plt.ylabel('Difference [pixel]')
         plt.xlabel('$c_{%d} [m]$' %self._j_noll)
         plt.grid('--', alpha = 0.3)
-        
-        rms_diff_obs_minus_fit = (obs_displacement - fit_displacement).std()
-        #slope ratio
-        lin_ratio = a/a_exp
-        return coeff,err_coeff, redchi, rms_diff_obs_minus_fit, lin_ratio, err_lin, R2
+                
+        return coeff,err_coeff, redchi, rms_diff_obs_minus_fit, slope_ratio, err_slope, R2
         
         
         

@@ -161,7 +161,7 @@ class SteppedPhaseGratingModel1D():
         
         return 0
     
-    def sins_sinc_intensity_pattern1D(self, x, spatial_period, Nsteps, phase_wrap):
+    def sincs2_intensity_pattern1D(self, x, spatial_period, Nsteps, phase_wrap):
         
         cost2 = (spatial_period**2/(self._wl*self._focal_length))**2
         arg_sin = (0.5 * phase_wrap/np.pi - spatial_period* x / (self._wl * self._focal_length))
@@ -170,6 +170,7 @@ class SteppedPhaseGratingModel1D():
         I = cost2 * sin_ratio2 * sinc2
         
         return I
+    
     
     def get_sampling_points_from_comb(self, spatial_period, q):
         
@@ -208,14 +209,29 @@ class SteppedPhaseGratingModel1D():
         gamma = 4 * c2_rms / self._Dpe
         return self._focal_length * gamma
     
+    def get_c2_rms_from_displacement(self, delta_x_in_m):
+        
+        return 0.25 *self._Dpe * delta_x_in_m / self._focal_length 
+    
+    def get_diffraction_efficiency(self, q_order, Nsteps, spatial_period, phase_wrap, NpixelOn1Axis = 1360 , pixel_pitch_in_m = 4.65e-6):
+        
+        orders = self.get_visible_orders_on_ccd(spatial_period, NpixelOn1Axis, pixel_pitch_in_m) 
+        x = self.get_sampling_points_from_comb(spatial_period, orders)
+        I = self.sincs2_intensity_pattern1D(x, spatial_period, Nsteps, phase_wrap)
+        Itot = I.sum()
+        eta = I/Itot
+        q = np.where(q_order == orders)[0][0]
+        
+        return eta[q]
+    
     def show_intensity_pattern(self, x, Nsteps, spatial_period, phase_wrap, NpixelOn1Axis = 1360 , pixel_pitch_in_m = 4.65e-6):
         
         M = phase_wrap / np.pi
-        I = self.sins_sinc_intensity_pattern1D(x, spatial_period, Nsteps, phase_wrap)
+        I = self.sincs2_intensity_pattern1D(x, spatial_period, Nsteps, phase_wrap)
         
         q_orders = self.get_visible_orders_on_ccd(spatial_period, NpixelOn1Axis, pixel_pitch_in_m) 
         xq = self.get_sampling_points_from_comb(spatial_period, q_orders)
-        Iq = self.sins_sinc_intensity_pattern1D(xq, spatial_period, Nsteps, phase_wrap)
+        Iq = self.sincs2_intensity_pattern1D(xq, spatial_period, Nsteps, phase_wrap)
         Itot = Iq.sum()
         eta_q = Iq/Itot
         

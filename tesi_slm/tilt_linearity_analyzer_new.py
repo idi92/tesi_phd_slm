@@ -187,6 +187,13 @@ class TiltedPsfAnalyzer():
         plt.ylabel('Difference $[\mu m]$')
         plt.xlabel('$c_{%d} [\mu m]$ rms' %self._j_noll)
         plt.grid('--', alpha = 0.3)
+        
+        rel_err_obs_minus_exp = (obs_displacement + exp_displacement)/obs_displacement
+        rel_err_fit_obs_minus_exp = (fit_displacement + exp_displacement)/obs_displacement
+        rel_err_obs_minus_fit = (obs_displacement - fit_displacement)/obs_displacement
+        print(rel_err_obs_minus_exp)
+        print(rel_err_fit_obs_minus_exp)
+        print(rel_err_obs_minus_fit)
                 
         return coeff,err_coeff, redchi, rms_diff_obs_minus_fit, slope_ratio, err_slope, R2
         

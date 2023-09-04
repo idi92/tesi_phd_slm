@@ -4,7 +4,7 @@ import numpy as np
 class SawtoothDiffractiveModel1D():
 
     def __init__(self,
-                 wl_in_m=632.8e-9,
+                 wl_in_m=635e-9,
                  incident_angle_in_deg=0,
                  Dpe_in_m=10.53e-3,
                  focal_length_in_m=250e-3,
@@ -138,7 +138,7 @@ class SawtoothDiffractiveModel1D():
 class SteppedPhaseGratingModel1D():
 
     def __init__(self,
-                 wl_in_m=632.8e-9,
+                 wl_in_m=635e-9,
                  incident_angle_in_deg=0,
                  Dpe_in_m=10.53e-3,
                  focal_length_in_m=250e-3,
@@ -164,7 +164,7 @@ class SteppedPhaseGratingModel1D():
 
         return c2_m_rms
 
-    def _stapped_phase_grating(self, x, Nsteps, spatial_period, phase_wrap):
+    def _TRASHME_stapped_phase_grating(self, x, Nsteps, spatial_period, phase_wrap):
 
         n = np.linspace(0, Nsteps - 1, Nsteps)
         phase = x * phase_wrap / Nsteps

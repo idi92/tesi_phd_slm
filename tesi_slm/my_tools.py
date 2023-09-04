@@ -3,6 +3,7 @@ from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from astropy.modeling.functional_models import Gaussian2D
 
+
 def cut_image_around_coord(image2D, yc, xc, halfside=25):
         cut_image = image2D[yc-halfside:yc+halfside, xc-halfside:xc+halfside]
         return cut_image
@@ -69,3 +70,17 @@ def reshape_map2vector(array2d, length = 2211840, method ='C'):
 
 def reshape_vector2map(vector, shape = [1152, 1920], method ='C'):
     return np.reshape(vector, (shape[0], shape[1]), method)
+
+def convert2uint8(array, wrapping_val = 635e-9):
+    '''
+    wrapping_val is the calibration wl or the phase wrap value
+    '''
+    data = array * 256 / wrapping_val
+    data = np.round(data)
+    return data.astype(np.uint8)
+
+def convert_uint8_2wrapped_phase(uint8_array):
+    unit = 2 * np.pi / 256
+    return unit * uint8_array
+    
+    

@@ -62,7 +62,7 @@ class SharpPsfOnCamera():
         '''
         zernike_builder = ZernikeGenerator(self._cmask_obj)
         image_to_display = np.zeros(self._mirror_shape)
-        image_to_display = np.ma.array(data = image_to_display, mask = self._cmask_obj.mask())
+        image_to_display = np.ma.array(data = image_to_display, mask = self._cmask_obj.mask(), fill_value = 0)
         for j, aj in enumerate(zernike_coefficients_in_meters):
             Zj = zernike_builder.getZernike(j + 2)
             image_to_display += aj * Zj

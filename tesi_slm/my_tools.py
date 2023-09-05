@@ -79,8 +79,17 @@ def convert2uint8(array, wrapping_val = 635e-9):
     data = np.round(data)
     return data.astype(np.uint8)
 
-def convert_uint8_2wrapped_phase(uint8_array):
-    unit = 2 * np.pi / 256
+def convert_uint8_2wrapped_phase(uint8_array, phase_wrap = 2*np.pi):
+    
+    unit = phase_wrap / 256
     return unit * uint8_array
+
+def opd2phase(self, opd, wl = 635e-9):
+
+    return 2 * np.pi * opd / wl
+
+def phase2opd(self, phase, wl = 635e-9):
+
+    return 0.5 * wl * phase / np.pi
     
     

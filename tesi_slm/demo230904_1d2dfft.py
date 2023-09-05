@@ -152,7 +152,7 @@ def fft2d():
     dm2d = DiffractionModel2D()
     
     I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
-    dm2d.show_imageplane(I, y, x)
+    dm2d.show_imageplane(I/I.max(), y, x)
     
     
     

@@ -82,7 +82,12 @@ def convert2uint8(array, wrapping_val = 635e-9):
 def convert_uint8_2wrapped_phase(uint8_array, phase_wrap = 2*np.pi):
     
     unit = phase_wrap / 256
-    return unit * uint8_array
+    # se restituivo
+    # unit * unit8_array
+    # nei valori a True avevo unit mentre lo voglio a zero
+    wrapped_phase = \
+    np.ma.array(data = unit * uint8_array.data, mask = uint8_array.mask, dtype=float)
+    return wrapped_phase
 
 def opd2phase(self, opd, wl = 635e-9):
 

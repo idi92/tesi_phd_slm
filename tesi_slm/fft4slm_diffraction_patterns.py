@@ -122,8 +122,9 @@ class DiffractionModel2D():
         self._Dpe = Dpe_in_m
         self._slm_pix_pitch = slm_pix_pitch_in_m
         
-    def get_diffraction_pattern(self, phase, Npad = 16):
+    def get_diffraction_pattern(self, phase, Npad = 4):
         
+        self._Npad = Npad
         Ui = 1 
         t = 1 * np.exp(1j * phase)
         Ut = t * Ui
@@ -154,15 +155,20 @@ class DiffractionModel2D():
                   0.5*I.shape[1]*dx/pixel_pitch]
         
         #extent_meters = extent_pixel * pixel_pitch
-        
+        self._Idiff_limit = self._get_diffraction_limited_psf(0*phase)
+        Idl = self._Idiff_limit.max()
         import matplotlib.pyplot as plt
         plt.figure()
         plt.clf()
-        plt.imshow(I, cmap = 'jet', extent=extent_pixel)
+        plt.imshow(I/Idl, cmap = 'jet', extent=extent_pixel)
+        #plt.colorbar()
         cbar = plt.colorbar()
-        cbar.ax.set_ylabel('W/m2')
+        cbar.ax.set_ylabel('Normalized Intensity')
         plt.xlim(-0.5*camshape[1], 0.5*camshape[1])
         plt.ylim(-0.5*camshape[0], 0.5*camshape[0])
         
+    def _get_diffraction_limited_psf(self, piston):
+        I, y, x = self.get_diffraction_pattern(piston, self._Npad)
+        return I
         
             

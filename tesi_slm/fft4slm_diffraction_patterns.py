@@ -152,7 +152,7 @@ class DiffractionModel2D():
             self._Idl = np.abs(np.fft.fftshift(np.fft.fft2(Udl))/(self._wl*self._focal_length))**2
         return I, y, x
     
-    def show_imageplane(self, I, y, x, camshape =(1024,1360), pixel_pitch = 4.65e-6):
+    def show_image_plane(self, I, y, x, camshape =(1024,1360), pixel_pitch = 4.65e-6):
         
         dy = np.abs(y[-1]- y[-2])
         dx = np.abs(x[-1]- x[-2])
@@ -175,6 +175,27 @@ class DiffractionModel2D():
         cbar.ax.set_ylabel('Normalized Intensity')
         plt.xlim(-0.5*camshape[1], 0.5*camshape[1])
         plt.ylim(-0.5*camshape[0], 0.5*camshape[0])
+    
+    def show_image_profiles(self,  I, y, x, camshape =(1024,1360), pixel_pitch = 4.65e-6):
+        # assi passanti per l origine del piano immagine
+        Idl_max = self._Idl.max()
+        yc, xc = np.where(self._Idl == Idl_max)[0][0], np.where(self._Idl==Idl_max)[1][0]
+        xdomain = 0.5 * camshape[1] * pixel_pitch
+        ydomain = 0.5 * camshape[0] * pixel_pitch
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.clf()
+        plt.plot(x, I[yc,:]/Idl_max, '.-')
+        plt.xlim(-xdomain, xdomain)
+        plt.xlabel('x [m]')
+        plt.ylabel('Normalized Intensity')
+        
+        plt.figure()
+        plt.clf()
+        plt.plot(y, I[:,xc]/Idl_max, '.-')
+        plt.xlim(-ydomain, ydomain)
+        plt.xlabel('y [m]')
+        plt.ylabel('Normalized Intensity')
         
     def get_diffraction_limited_psf(self):
         return self._Idl

@@ -146,13 +146,13 @@ def fft2d():
     Z2 = zg.getZernike(2)
     wf2display = c2 * Z2
     
-    wfuint8 = my_tools.convert2uint8(wf2display, 635e-9)
-    wrapped_phase = my_tools.convert_uint8_2wrapped_phase(wfuint8, 2*np.pi)
+    #wfuint8 = my_tools.convert2uint8(wf2display, 635e-9)
+    wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, 2*np.pi)
     
     dm2d = DiffractionModel2D()
     
     I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
-    dm2d.show_imageplane(I/I.max(), y, x)
+    dm2d.show_image_plane(I, y, x)
     
     
     

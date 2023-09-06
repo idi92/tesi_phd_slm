@@ -121,6 +121,7 @@ class DiffractionModel2D():
         self._focal_length = focal_length_in_m
         self._Dpe = Dpe_in_m
         self._slm_pix_pitch = slm_pix_pitch_in_m
+        self._Idl = None
         
     def get_diffraction_pattern(self, phase, Npad = 4):
         
@@ -133,6 +134,11 @@ class DiffractionModel2D():
         Ut_extended = np.zeros((Dim * Npad, Dim * Npad), dtype=complex)
         Ut_extended[0 : Ut.shape[0], 0 : Ut.shape[1]] = Ut
         
+        piston = np.ma.array(data = np.ones(Ut.shape), mask = Ut.mask)
+        piston.data[piston.mask == True] = 0
+        Udl = np.zeros(Ut_extended.shape, dtype=complex)
+        Udl[0 : Ut.shape[0], 0 : Ut.shape[1]] = piston
+        
         dxi = self._slm_pix_pitch #self._Dpe/(2*571)
         deta = dxi #self._Dpe/(2*571)
         
@@ -141,6 +147,9 @@ class DiffractionModel2D():
         
         I = np.abs(np.fft.fftshift(np.fft.fft2(Ut_extended))/(self._wl*self._focal_length))**2
         
+        
+        if self._Idl is None:
+            self._Idl = np.abs(np.fft.fftshift(np.fft.fft2(Udl))/(self._wl*self._focal_length))**2
         return I, y, x
     
     def show_imageplane(self, I, y, x, camshape =(1024,1360), pixel_pitch = 4.65e-6):
@@ -155,20 +164,25 @@ class DiffractionModel2D():
                   0.5*I.shape[1]*dx/pixel_pitch]
         
         #extent_meters = extent_pixel * pixel_pitch
-        self._Idiff_limit = self._get_diffraction_limited_psf(0*phase)
-        Idl = self._Idiff_limit.max()
+        
+        Imax = self._Idl.max()
         import matplotlib.pyplot as plt
         plt.figure()
         plt.clf()
-        plt.imshow(I/Idl, cmap = 'jet', extent=extent_pixel)
+        plt.imshow(I/Imax, cmap = 'jet', extent=extent_pixel)
         #plt.colorbar()
         cbar = plt.colorbar()
         cbar.ax.set_ylabel('Normalized Intensity')
         plt.xlim(-0.5*camshape[1], 0.5*camshape[1])
         plt.ylim(-0.5*camshape[0], 0.5*camshape[0])
         
-    def _get_diffraction_limited_psf(self, piston):
-        I, y, x = self.get_diffraction_pattern(piston, self._Npad)
-        return I
-        
-            
+    def get_diffraction_limited_psf(self):
+        return self._Idl
+    
+    def reset_diffraction_limited_psf(self):
+        '''
+        If cmask shape is changed (so that the phase wrap map), the diffraction limited psf has to be
+        compute again in self.get_diffraction patter.
+        reset Idl is needed
+        '''
+        self._Idl = None

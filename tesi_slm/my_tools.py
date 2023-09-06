@@ -89,6 +89,11 @@ def convert_uint8_2wrapped_phase(uint8_array, phase_wrap = 2*np.pi):
     np.ma.array(data = unit * uint8_array.data, mask = uint8_array.mask, dtype=float)
     return wrapped_phase
 
+def convert_opd2wrapped_phase(wf, wl = 635e-9, phase_wrap = np.pi*2):
+    wf_uint8 = convert2uint8(wf, wl)
+    wrapped_phase = convert_uint8_2wrapped_phase(wf_uint8, phase_wrap)
+    return wrapped_phase
+
 def opd2phase(self, opd, wl = 635e-9):
 
     return 2 * np.pi * opd / wl
@@ -96,5 +101,7 @@ def opd2phase(self, opd, wl = 635e-9):
 def phase2opd(self, phase, wl = 635e-9):
 
     return 0.5 * wl * phase / np.pi
+
+
     
     

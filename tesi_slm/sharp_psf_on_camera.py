@@ -1,4 +1,5 @@
 import numpy as np 
+from scipy.interpolate import CubicSpline
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
 import pysilico
@@ -117,7 +118,10 @@ class SharpPsfOnCamera():
         Nframes =  Nframe2average
         self._Nframes = Nframes
         self._merit_par = np.zeros((27, Namp))
-        for j in explore_jnoll:
+        self._finter = []
+        delta = 5e-9
+        self._cc = np.arange(self._c_span.min(), self._c_span.max()+ delta, delta)
+        for jidx, j in enumerate(np.array(explore_jnoll)):
             
             for idx_c, cj in enumerate(c_span):
                 #starting from z2 up to z11
@@ -128,8 +132,11 @@ class SharpPsfOnCamera():
                 mean_image = clean_cube_images(image, self._master_dark, self._master_background)
                 image_roi = cut_image_around_coord(mean_image, self._yc_roi, self._xc_roi, self._halfside)
                 self._merit_par[k, idx_c] = merit_function(image_roi)
-            max_idx = get_index_from_array(self._merit_par[k], value = self._merit_par[k].max())
-            coeff2apply[k] = c_span[max_idx]
+                
+            self._finter.append(CubicSpline(self._c_span, self._merit_par[k], bc_type='natural'))
+            f = self._finter[jidx](self._cc)
+            max_idx = get_index_from_array(f, value = f.max())
+            coeff2apply[k] = self._cc[max_idx]
         
         best_coeff = coeff2apply
         self._best_coeff = best_coeff   
@@ -137,15 +144,23 @@ class SharpPsfOnCamera():
     
     def plot_merit_values(self, c_span, j_index_to_explore):
         explore_jnoll = np.array(j_index_to_explore)
+        #self._create_interpolation()
         import matplotlib.pyplot as plt
         plt.figure()
-        for j in explore_jnoll:
+        for idx, j in enumerate(np.array(explore_jnoll)):
             k = int(j-2)
-            plt.plot(c_span, self._merit_par[k],'o-',label='j=%d'%j)
+            plt.plot(c_span, self._merit_par[k],'o',label='j=%d'%j)
+            plt.plot(self._cc, self._finter[idx](self._cc),'.-')
         plt.xlabel('$c_j [m]$')
         plt.ylabel('merit value')
         plt.grid(ls='--',alpha = 0.4)
         plt.legend(loc='best')
+        
+    def _create_interpolation(self):
+        self._finter = [CubicSpline(self._c_span[i], self._merit_par[i], bc_type='natural')
+                        for i in range(self._merit_par.shape[0])]
+        delta = 5e-9
+        self._cc = np.arange(self.c_span.min(), self._c_span.max()+delta, delta)
     
     def _get_max_image(self, image):
         return image.max()

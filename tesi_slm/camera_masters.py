@@ -31,6 +31,14 @@ class CameraMastersMeasurer():
         texp = header['T_EX_MS']
         tag = header['MAST']
         return tag, texp, Nframes, cube_images
+    
+    def acquire_masters_at_different_texp(self, texp_array, dirname, Nframes = 20, tag='dark' ):
+        for texp in texp_array:
+            
+            self.acquire_images(Nframes, texp)
+            fname = dirname + tag +"_texp_"+ str(texp)+ "ms.fits" 
+            self.save_master(fname, tag)
+            
 
 class CameraMastersAnalyzer():
     
@@ -78,3 +86,13 @@ class CameraMastersAnalyzer():
         texp = header['T_EX_MS']
         #tag = header['MAST']
         return texp, Nframes, master_dark, master_background
+    
+def compute_masters_at_different_texp(texp_array, fdir_dark, fdir_bg, fdir_masters):
+    
+        for texp in texp_array:
+            fname_dark = fdir_dark + "cmm_dark_texp_"+ str(texp)+"ms.fits"
+            fname_bg = fdir_bg + "cmm_bg_texp_"+ str(texp)+"ms.fits"
+            cma = CameraMastersAnalyzer(fname_dark, fname_bg)
+            cma.compute_masters()
+            fname_masters = fdir_masters+"cma_masters_texp"+str(texp)+"ms.fits"
+            cma.save_camera_masters(fname_masters)

@@ -95,7 +95,7 @@ class SharpPsfOnCamera():
         ' up to j =28, avoiding piston j=1. Input length %d expected <=27'%N_of_jnoll
             
         if init_coeff is None:
-            init_coeff = np.zeros(10)
+            init_coeff = np.zeros(len(explore_jnoll)+2)
         self._init_coeff = init_coeff    
         if method == 'max':
             merit_function = self._get_max_image
@@ -150,7 +150,7 @@ class SharpPsfOnCamera():
         for idx, j in enumerate(np.array(explore_jnoll)):
             k = int(j-2)
             plt.plot(c_span, self._merit_par[k],'o',label='j=%d'%j)
-            plt.plot(self._cc, self._finter[idx](self._cc),'.-')
+            plt.plot(self._cc, self._finter[idx](self._cc),'-')
         plt.xlabel('$c_j [m]$')
         plt.ylabel('merit value')
         plt.grid(ls='--',alpha = 0.4)
@@ -196,3 +196,42 @@ class SharpPsfOnCamera():
         fits.append(fname, self._init_coeff)
         fits.append(fname, self._j_explored)
     
+    def save_shap_coeffs_matrix(self, fname):
+        hdr = fits.Header()
+        hdr['T_EX_MS'] = self._texp
+        hdr['N_AV_FR'] = self._Nframes
+        hdr['MET'] = self._method
+        hdr['HS_ROI'] = self._halfside
+        
+        
+        fits.writeto(fname, self._coeff_matrix, hdr)
+        fits.append(fname, self._c_span)
+        fits.append(fname, self._merit_par)
+        fits.append(fname, self._init_coeff)
+        fits.append(fname, self._j_explored)
+        
+        
+    def repeat_sharpening(self, Ntimes, j_index_to_explore, c_span , texp_in_ms, Nframe2average=10,  init_coeff = None, method = 'max'):
+        
+        Nmodes = len(j_index_to_explore) + 2
+        self._coeff_matrix = np.zeros((Nmodes, Ntimes))
+        
+        for n in range(Ntimes):
+            self._coeff_matrix[:, n] = self.sharp_in_roi(j_index_to_explore, c_span, texp_in_ms, Nframe2average, init_coeff, method)
+            self.set_slm_flat()
+    
+    def show_barplot(self, j_index, coeff, err_coeff = None):
+        
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.clf()
+        plt.bar(j_index, coeff/1e-9, align='center', color='r')
+        
+        if err_coeff is not None:
+            plt.errorbar(j_index, coeff/1e-9, err_coeff/1e-9, fmt='ko', ecolor='k',linestyle = '' )
+            
+        plt.xlabel('j index')
+        plt.xticks(j_index)
+        plt.ylabel('$c_j$'+' '+ '[nm rms]')
+        plt.grid('--',alpha=0.3)
+        

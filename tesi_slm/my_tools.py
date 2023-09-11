@@ -103,5 +103,21 @@ def phase2opd(self, phase, wl = 635e-9):
     return 0.5 * wl * phase / np.pi
 
 
+def save_clean_psf(fname, ima_clean, texp, Nframes, par, err, coeff):
+    from astropy.io import fits
+    hdr = fits.Header()
+    hdr['T_EX_MS'] = texp
+    hdr['N_AV_FR'] = Nframes
+        
+    fits.writeto(fname ,ima_clean, hdr)
+    fits.append(fname, par)
+    fits.append(fname, err)
+    fits.append(fname, coeff)
+    
+def open_fits_file(fname):
+    from astropy.io import fits
+    header = fits.getheader(fname)
+    hduList = fits.open(fname)
+    return header, hduList
     
     

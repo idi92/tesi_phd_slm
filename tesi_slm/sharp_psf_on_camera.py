@@ -151,7 +151,7 @@ class SharpPsfOnCamera():
             k = int(j-2)
             plt.plot(c_span, self._merit_par[k],'o',label='j=%d'%j)
             plt.plot(self._cc, self._finter[idx](self._cc),'-')
-        plt.xlabel('$c_j [m]$')
+        plt.xlabel('$c_j$'+' '+ '[m rms]')
         plt.ylabel('merit value')
         plt.grid(ls='--',alpha = 0.4)
         plt.legend(loc='best')

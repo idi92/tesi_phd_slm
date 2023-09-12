@@ -147,17 +147,19 @@ class SharpPsfOnCamera():
         #self._create_interpolation()
         import matplotlib.pyplot as plt
         plt.figure()
+        ax = plt.gca()
         for idx, j in enumerate(np.array(explore_jnoll)):
             k = int(j-2)
-            plt.plot(c_span, self._merit_par[k],'o',label='j=%d'%j)
-            plt.plot(self._cc, self._finter[idx](self._cc),'-')
-        plt.xlabel('$c_j$'+' '+ '[m rms]')
+            color = next(ax._get_lines.prop_cycler)['color']
+            plt.plot(c_span/1e-9, self._merit_par[k],'o',label='j=%d'%j, color = color)
+            plt.plot(self._cc/1e-9, self._finter[idx](self._cc),'-', color = color)
+        plt.xlabel('$c_j$'+' '+ '[nm] rms')
         plt.ylabel('merit value')
         plt.grid(ls='--',alpha = 0.4)
         plt.legend(loc='best')
         
     def _create_interpolation(self):
-        self._finter = [CubicSpline(self._c_span[i], self._merit_par[i], bc_type='natural')
+        self._finter = [CubicSpline(self._c_span, self._merit_par[i], bc_type='natural')
                         for i in range(self._merit_par.shape[0])]
         delta = 5e-9
         self._cc = np.arange(self.c_span.min(), self._c_span.max()+delta, delta)

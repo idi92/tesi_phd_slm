@@ -30,7 +30,7 @@ def main(fname_blink, fname_spoc):
     
     plt.figure()
     plt.plot(z6_blink[550,:], 'b-',label='Blink')
-    plt.plot(z6_spoc[550,:], 'r-',label='spoc')
+    plt.plot(z6_spoc[550,:], 'r-',label='PLICO')
     plt.plot((z6[550,:]/635e-9*256)%256, 'm--',label='unrounded')
     plt.legend(loc='best')
     plt.vlines(853,0, 256,'k','--')
@@ -40,7 +40,7 @@ def main(fname_blink, fname_spoc):
     
     plt.figure()
     plt.plot(z6_blink[:, 853], 'b-',label='Blink')
-    plt.plot(z6_spoc[:, 853], 'r-',label='spoc')
+    plt.plot(z6_spoc[:, 853], 'r-',label='PLICO')
     plt.plot((z6[:,853]/635e-9*256)%256, 'm--',label='unrounded')
     plt.legend(loc='best')
     plt.vlines(550, 0, 256,'k','--')
@@ -56,7 +56,7 @@ def main(fname_blink, fname_spoc):
     
     plt.figure()
     plt.plot(z6_blink[550,:], 'b.-',label='Blink')
-    plt.plot(z6_spoc[550,:], 'r.-',label='spoc')
+    plt.plot(z6_spoc[550,:], 'r.-',label='PLICO')
     plt.plot((z6[550,:]/635e-9*256)%256, 'm.--',label='unrounded')
     plt.legend(loc='best')
     plt.vlines(853,0, 256,'k','--')
@@ -66,7 +66,7 @@ def main(fname_blink, fname_spoc):
     
     plt.figure()
     plt.plot(z6_blink[:, 853], 'b.-',label='Blink')
-    plt.plot(z6_spoc[:, 853], 'r.-',label='spoc')
+    plt.plot(z6_spoc[:, 853], 'r.-',label='PLICO')
     plt.plot((z6[:,853]/635e-9*256)%256, 'm.--',label='unrounded')
     plt.legend(loc='best')
     plt.vlines(550, 0, 256,'k','--')
@@ -77,10 +77,10 @@ def main(fname_blink, fname_spoc):
     z_un = (z6/635e-9*256)%256
     print('value around center along x axis:')
     for idx in range(834, 866):
-        print('index {}\t unrounded: {}\t blink: {}\t spoc: {}'.format(
+        print('index {}\t unrounded: {}\t blink: {}\t PLICO: {}'.format(
             idx-853, z_un[550,idx], z6_blink[550, idx], z6_spoc[550, idx]))
         
     print('value around center along y axis:')
     for idx in range(539, 561):
-        print('index {}\t unrounded: {}\t blink: {}\t spoc: {}'.format(
+        print('index {}\t unrounded: {}\t blink: {}\t PLICO: {}'.format(
             idx-550, z_un[idx, 853], z6_blink[idx, 853], z6_spoc[idx, 853]))

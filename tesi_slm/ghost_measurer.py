@@ -105,16 +105,16 @@ class MeasureGhost():
     
 class AnalyzeGhostRatio():
     
-    def __init__(self, angles, fdir):
+    def __init__(self, angles, fdir, fname_tag='230315gm_ang'):
         Nangles = len(angles)
         self._rot_angle = np.zeros(Nangles)
         self._ghost_mean  = np.zeros(Nangles)
         self._ghost_err  = np.zeros(Nangles)
         self._mod_mean  = np.zeros(Nangles)
         self._mod_err  = np.zeros(Nangles)
-        
+        self._fname_tag = fname_tag
         for n in range(Nangles):
-            fname = fdir+'/230315gm_ang'+'%d.fits'%angles[n]
+            fname = fdir+self._fname_tag+'%d.fits'%angles[n]
             texp, angle, data = MeasureGhost.load(fname)
             self._rot_angle[n] = angle
             self._ghost_mean[n] = data[0]

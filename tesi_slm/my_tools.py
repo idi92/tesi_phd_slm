@@ -65,6 +65,14 @@ def clean_cube_images(cube_image, master_dark, master_background):
         clean_cube[:, :, n] = clean_image(image, master_dark, master_background)
     return clean_cube.mean(axis = 2)
 
+def get_clean_cube_images(cube_image, master_dark, master_background):
+    Nframes = cube_image.shape[-1]
+    clean_cube = np.zeros(cube_image.shape)
+    for n in range(Nframes):
+        image = cube_image[:, :, n]
+        clean_cube[:, :, n] = clean_image(image, master_dark, master_background)
+    return clean_cube
+
 def reshape_map2vector(array2d, length = 2211840, method ='C'):
     return np.reshape(array2d, (length,), method)
 

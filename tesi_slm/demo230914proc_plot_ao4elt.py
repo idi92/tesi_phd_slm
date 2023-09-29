@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tesi_slm import my_tools
+from astropy.io import fits
 
 def sharped_and_unsharped_psf(fname):
     #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"
@@ -178,3 +179,34 @@ def diffraction_eff():
     plt.ylabel('$<I_{modulated}> / <I_{flat}>$')
     plt.legend(loc='best')
     plt.grid(ls ='--', alpha = 0.5)
+    
+def get_best_coeff_from_psf_sharpening():
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"
+    #j from 4 to 28
+    fflatv0 = "230918spoc_coef_matrix_flat_texp1.0ms_10times_v0.fits"
+    fflatv1 = "230918spoc_coef_matrix_flat_texp1.0ms_10times_v1.fits"
+    fflatv2 = "230918spoc_coef_matrix_flat_texp1.0ms_10times_v2.fits"
+    fflatv3 = "230919spoc_coef_matrix_flat_texp1.0ms_10times_v3.fits"
+    fflatv4 = "230919spoc_coef_matrix_flat_texp1.0ms_10times_v4.fits"
+    ftiltv0 = "230920spoc_coef_matrix_c2p10umrms_texp1.0ms_10times_v0.fits"
+    ftiltv1 = "230920spoc_coef_matrix_c2p10umrms_texp1.0ms_10times_v1.fits"
+    ftiltv2 = "230921spoc_coef_matrix_c2p10umrms_texp1.0ms_10times_v2.fits"
+    ftiltv3 = "230921spoc_coef_matrix_c2p10umrms_texp1.0ms_10times_v3.fits"
+    ftiltv4 = "230922spoc_coef_matrix_c2p10umrms_texp1.0ms_10times_v4.fits"
+    # j from 4 to 11
+    ftiltm20 = "230911spoc_coef_matrix_c2_m20umrms_texp1.0ms_30times_v0.fits"
+    ftiltm10  ="230911spoc_coef_matrix_c2_m10umrms_texp1.0ms_30times_v0.fits"
+    fflat11 = "230911spoc_coef_matrix_flat_texp1.0ms_30times_v0.fits"
+    
+    Ntimes = 50
+    for idx in np.arange(Ntimes):
+        hh , dd = my_tools.open_fits_file(fname)
+        coeff_flat = dd[0].data.mean(axis=1)
+
+def get_flat_best_coeff():
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"
+    fflatv4 = "230919spoc_coef_matrix_flat_texp1.0ms_10times_v4.fits"
+    fname = fpath + fflatv4
+    hh , dd = my_tools.open_fits_file(fname)
+    coeff_flat = dd[0].data.mean(axis=1)
+    return coeff_flat

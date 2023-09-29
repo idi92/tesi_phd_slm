@@ -219,6 +219,7 @@ class SharpPsfOnCamera():
         self._coeff_matrix = np.zeros((Nmodes, Ntimes))
         
         for n in range(Ntimes):
+            print('%d time\n' %n)
             self._coeff_matrix[:, n] = self.sharp_in_roi(j_index_to_explore, c_span, texp_in_ms, Nframe2average, init_coeff, method)
             self.set_slm_flat()
     

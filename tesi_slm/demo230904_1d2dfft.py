@@ -154,5 +154,86 @@ def fft2d():
     I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
     dm2d.show_image_plane(I, y, x)
     
+def show_expected_order_efficiency(phase_wrap=2*np.pi):
+    camshape =(1024,1360)
+    pixel_pitch = 4.65e-6
+    frameshape = (1152, 1920)
+    radius = 571
+    centeryx = (571, 875)
+    cmask_obj = CircularMask(frameshape, radius, centeryx)
+    #building a zernike over the pupil
+    zg = ZernikeGenerator(cmask_obj)
+    wf2display = np.zeros(frameshape)
+    wf2display = np.ma.array(data = wf2display, mask = cmask_obj.mask(), fill_value = 0)
+    N=13
+    c2 = np.linspace(-15e-6,15e-6,N)
+    Z2 = zg.getZernike(2)
+    dm2d = DiffractionModel2D()
     
+    plt.figure()
+    plt.clf()
+    xdomain = 0.5 * camshape[1] * pixel_pitch
+    ydomain = 0.5 * camshape[0] * pixel_pitch
+    
+    eta1 = np.zeros(N)
+    eta0 = np.zeros(N)    
+    
+    for idx, amp in enumerate(c2):
+        wf2display = amp * Z2
+        wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, phase_wrap)
+        I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 8)
+        Idl_max = dm2d._Idl.max()
+        yc, xc = np.where(dm2d._Idl == Idl_max)[0][0], np.where(dm2d._Idl==Idl_max)[1][0]
+        plt.plot(x, I[yc,:]/Idl_max, '.-', label='%g um rms'%amp)
+        
+        eta1[idx] = I.max()/Idl_max
+        eta0[idx] = I[yc,xc]/Idl_max
+        
+    plt.xlim(-xdomain, xdomain)
+    plt.xlabel('x [m]')
+    plt.ylabel('Normalized Intensity')
+    plt.legend(loc='best')
+    
+    plt.figure()
+    plt.clf()
+    plt.plot(c2, eta1, 'ro-', label=r'$\eta_1$')
+    plt.plot(c2,eta0,'bo-',label=r'$\eta_0$')
+    plt.legend(loc='best')
+    plt.grid('--',alpha=0.3)
+    plt.xlabel('$c_2[um]rms$')
+    plt.ylabel(r'$\eta$')
+    
+def simulating_pixelated_slm_structure1d(c2_m_rms):
+    camshape =(1024,1360)
+    d = 9.2e-6
+    delta = 9e-6
+    f = 250e-3
+    wl = 635e-9
+    c2 = c2_m_rms
+    Dpe = 10.5e-3
+    LL = Dpe/(4*c2)*wl
+    
+    xdomain = 0.5 * camshape[1] * 4.65e-6
+    xx = np.linspace(-0.1,0.1,5000)
+    def isinc2(x):
+        d = 9.2e-6
+        delta = 9e-6
+        f = 250e-3
+        wl = 635e-9
+        c2 = 15e-6
+        Dpe = 10.5e-3
+        LL = Dpe/(4*c2)*wl
+        arg = delta*(x/(f*wl) - 1/LL)
+        I = (delta*d/(f*wl))**2*np.sinc(arg)**2
+        return I
+
+    qmax = int(xdomain/(wl*f/d))
+    xq = np.arange(-2,2+1)*wl*f/d
+    
+    plt.figure()
+    plt.clf()
+    plt.plot(xx, isinc2(xx), 'k.-')
+    plt.plot(xq, isinc2(xq), 'ro')
+    plt.xlabel('x axis [m]')
+    plt.ylabel('Intensity') 
     

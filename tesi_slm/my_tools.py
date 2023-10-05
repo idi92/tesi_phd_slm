@@ -2,6 +2,7 @@ import numpy as np
 from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from astropy.modeling.functional_models import Gaussian2D
+from arte.types.mask import CircularMask
 
 
 def cut_image_around_coord(image2D, yc, xc, halfside=25):
@@ -127,5 +128,13 @@ def open_fits_file(fname):
     header = fits.getheader(fname)
     hduList = fits.open(fname)
     return header, hduList
-    
-    
+
+def get_circular_mask_obj(centerYX = (571, 875), RadiusInPixel = 571, frameshape=(1152, 1920)):
+    cmask = CircularMask(
+        frameShape = frameshape,
+        maskRadius = RadiusInPixel,
+        maskCenter = centerYX)
+    return cmask
+
+def get_circular_mask(centerYX = (571, 875), RadiusInPixel = 571, frameshape=(1152, 1920)):
+    return get_circular_mask_obj(centerYX, RadiusInPixel, frameshape).mask()

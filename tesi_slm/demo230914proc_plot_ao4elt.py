@@ -162,8 +162,8 @@ def diffraction_eff():
     
     plt.subplots(2,1,sharex=True)
     plt.subplot(2,1,1)
-    plt.plot(c_span, Ig_spa, 'bo-', label = 'SP117A')
-    plt.plot(c_span, Ig_thor, 'bo--', label = 'THORLABS', alpha=0.5)
+    plt.plot(c_span, Ig_spa, 'bo', label = 'SP117A')
+    plt.plot(c_span, Ig_thor, 'bx', label = 'THORLABS', alpha=0.5)
     plt.errorbar(c_span, Ig_spa, errIg_spa, fmt='.b', ecolor ='b', linestyle='')
     plt.errorbar(c_span, Ig_thor, errIg_thor, fmt='.b', ecolor ='b', linestyle='',alpha=0.5)
     plt.xlabel('c [m]')
@@ -171,14 +171,41 @@ def diffraction_eff():
     plt.legend(loc='best')
     plt.grid(ls ='--', alpha = 0.5)
     plt.subplot(2,1,2)
-    plt.plot(c_span, Im_spa, 'ro-', label = 'SP117A')
-    plt.plot(c_span, Im_thor, 'ro-', label = 'THORLABS', alpha=0.5)
+    plt.plot(c_span, Im_spa, 'ro', label = 'SP117A')
+    plt.plot(c_span, Im_thor, 'rx', label = 'THORLABS', alpha=0.5)
     plt.errorbar(c_span, Im_spa, errIm_spa, fmt='.r', ecolor ='r', linestyle='')
     plt.errorbar(c_span, Im_thor, errIm_thor, fmt='.r', ecolor ='r', linestyle='',alpha=0.5)
     plt.xlabel('c [m]')
     plt.ylabel('$<I_{modulated}> / <I_{flat}>$')
     plt.legend(loc='best')
     plt.grid(ls ='--', alpha = 0.5)
+    
+    #avoid c2 = 0 um rms
+    mmask = np.zeros(len(c_span))
+    mmask[4] = 1
+    c_span_m = np.ma.array(c_span, mask = mmask)
+    Ig_spa_m = np.ma.array(Ig_spa, mask = mmask)
+    errIg_spa_m =  np.ma.array(errIm_spa, mask = mmask)
+    Im_spa_m = np.ma.array(Im_spa, mask = mmask)
+    errIm_spa_m =  np.ma.array(errIm_spa, mask = mmask)
+    plt.subplots(2,1,sharex=True)
+    plt.subplot(2,1,1)
+    plt.plot(c_span_m, Ig_spa_m, 'bo', label = 'ghost')
+    plt.errorbar(c_span_m, Ig_spa_m, errIg_spa_m, fmt='.b', ecolor ='b', linestyle='')
+    #plt.xlabel('$c [m] rms$')
+    plt.ylabel('$<I_{ghost}> / <I_{flat}>$')
+    plt.legend(loc='best')
+    plt.grid(ls ='--', alpha = 0.5)
+    #plt.ylim(0.03,0.075)
+    plt.subplot(2,1,2)
+    plt.plot(c_span_m, Im_spa_m, 'ro', label = 'mod')
+    plt.errorbar(c_span_m, Im_spa_m, errIm_spa_m, fmt='.r', ecolor ='r', linestyle='')
+    #plt.ylim(0.85,1.05)
+    plt.xlabel('$c$'+'  [m] rms')
+    plt.ylabel('$<I_{modulated}> / <I_{flat}>$')
+    plt.legend(loc='best')
+    plt.grid(ls ='--', alpha = 0.5)
+    
     
 def get_best_coeff_from_psf_sharpening():
     fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"
@@ -202,11 +229,15 @@ def get_best_coeff_from_psf_sharpening():
     for idx in np.arange(Ntimes):
         hh , dd = my_tools.open_fits_file(fname)
         coeff_flat = dd[0].data.mean(axis=1)
+    
+    return coeff_flat
 
 def get_flat_best_coeff():
     fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"
     fflatv4 = "230919spoc_coef_matrix_flat_texp1.0ms_10times_v4.fits"
-    fname = fpath + fflatv4
+    ftiltm10  ="230911spoc_coef_matrix_c2_m10umrms_texp1.0ms_30times_v0.fits"
+    fflat11 = "230911spoc_coef_matrix_flat_texp1.0ms_30times_v0.fits"
+    fname = fpath + fflat11
     hh , dd = my_tools.open_fits_file(fname)
     coeff_flat = dd[0].data.mean(axis=1)
     return coeff_flat

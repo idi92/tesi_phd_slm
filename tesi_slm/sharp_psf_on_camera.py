@@ -101,6 +101,8 @@ class SharpPsfOnCamera():
             merit_function = self._get_max_image
         if method == 'std':
             merit_function = np.std
+        if method == 'sum':
+            merit_function = np.sum
         self._method = method
         Namp = len(c_span)
         self._c_span = c_span
@@ -131,6 +133,7 @@ class SharpPsfOnCamera():
                 image = self._cam.getFutureFrames(Nframes, 1).toNumpyArray()
                 mean_image = clean_cube_images(image, self._master_dark, self._master_background)
                 image_roi = cut_image_around_coord(mean_image, self._yc_roi, self._xc_roi, self._halfside)
+                image_roi[image_roi < 0] = 0
                 self._merit_par[k, idx_c] = merit_function(image_roi)
                 
             self._finter.append(CubicSpline(self._c_span, self._merit_par[k], bc_type='natural'))

@@ -4,6 +4,7 @@ from tesi_slm import sharp_psf_on_camera, my_tools, fft4slm_diffraction_patterns
 import matplotlib.pyplot as plt
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
+from tesi_slm import my_tools
 
 def tilt_fft():
     
@@ -132,7 +133,7 @@ def considering_incident_angle():
     plt.ylabel(r'$\Phi(\xi)[rad]$')
     plt.title('$c_2 = %g m rms$'%c2)
     
-def fft2d():
+def fft2d(c2 = 4.16e-6, phase_wrap = 2*np.pi):
     #building circular pupil mask 
     frameshape = (1152, 1920)
     radius = 571
@@ -142,17 +143,56 @@ def fft2d():
     zg = ZernikeGenerator(cmask_obj)
     wf2display = np.zeros(frameshape)
     wf2display = np.ma.array(data = wf2display, mask = cmask_obj.mask(), fill_value = 0)
-    c2 = 500e-9
+    #c2 = 4.16e-6
     Z2 = zg.getZernike(2)
     wf2display = c2 * Z2
     
     #wfuint8 = my_tools.convert2uint8(wf2display, 635e-9)
-    wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, 2*np.pi)
+    wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, phase_wrap)
     
     dm2d = DiffractionModel2D()
     
     I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
     dm2d.show_image_plane(I, y, x)
+    
+
+def zero_first_ordes_as_a_func_of_phi_wrap(phase_span, c2 = 4.16e-6):
+    #building circular pupil mask 
+    frameshape = (1152, 1920)
+    radius = 571
+    centeryx = (571, 875)
+    cmask_obj = CircularMask(frameshape, radius, centeryx)
+    #building a zernike over the pupil
+    zg = ZernikeGenerator(cmask_obj)
+    wf2display = np.zeros(frameshape)
+    wf2display = np.ma.array(data = wf2display, mask = cmask_obj.mask(), fill_value = 0)
+    #c2 = 4.16e-6
+    Z2 = zg.getZernike(2)
+    wf2display = c2 * Z2
+    
+    dm2d = DiffractionModel2D()
+    I_at_zero = np.zeros(len(phase_span))
+    I_at_first =  np.zeros(len(phase_span))
+    
+    for idx, phi in enumerate(phase_span):
+        
+        wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, phi)
+        
+        I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
+        Idl_max = dm2d._Idl.max()
+        yd, xd = my_tools.get_index_from_image(dm2d._Idl)
+        y1, x1 = my_tools.get_index_from_image(I)
+        I_at_zero[idx] = I[yd,xd]/Idl_max
+        I_at_first[idx] = I[y1,x1]/Idl_max
+        
+    return I_at_zero, I_at_first
+
+def plot_zero_and_first_order_vs_phi():
+    phase_span = 2*np.pi * np.linspace(0.5,1,10)
+    I0, I1 = zero_first_ordes_as_a_func_of_phi_wrap(phase_span, c2 = 4.16e-6)
+    plt.figure()
+    plt.clf()
+    plt.plot(phase_span, I0,'bo-',phase_span,I1,'ro-')
     
 def show_expected_order_efficiency(phase_wrap=2*np.pi):
     camshape =(1024,1360)
@@ -201,7 +241,7 @@ def show_expected_order_efficiency(phase_wrap=2*np.pi):
     plt.legend(loc='best')
     plt.grid('--',alpha=0.3)
     plt.xlabel('$c_2[um]rms$')
-    plt.ylabel(r'$\eta$')
+    plt.ylabel(r'$\eta$') 
     
 def simulating_pixelated_slm_structure1d(c2_m_rms):
     camshape =(1024,1360)

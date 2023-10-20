@@ -1,6 +1,6 @@
 import numpy as np
 from tesi_slm.fft4slm_diffraction_patterns import DiffractionModel1D, DiffractionModel2D
-from tesi_slm import sharp_psf_on_camera, my_tools, fft4slm_diffraction_patterns
+from tesi_slm import sharp_psf_on_camera, my_tools, slm_diffractive_model1D
 import matplotlib.pyplot as plt
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
@@ -154,8 +154,24 @@ def fft2d(c2 = 4.16e-6, phase_wrap = 2*np.pi):
     
     I, y, x = dm2d.get_diffraction_pattern(wrapped_phase, 4)
     dm2d.show_image_plane(I, y, x)
-    
 
+def zero_first_order1Dmodel_I_vs_phi(c2, phase_span):
+    
+    spgm1d = slm_diffractive_model1D.SteppedPhaseGratingModel1D()
+    I0 = np.zeros(len(phase_span))
+    I1 = np.zeros(len(phase_span))
+    for idx, phi in enumerate(phase_span):
+        
+        LL = spgm1d.get_sawtooth_spatial_period_from_c2(c2, phi)
+        N = min(LL/spgm1d._slm_pix_pitch, 256)
+        x0 = spgm1d.get_sampling_points_from_comb(LL, 0)
+        x1 = spgm1d.get_sampling_points_from_comb(LL, 1)
+        #I0[idx] = spgm1d.sincs2_intensity_pattern1D(x0, LL, N, phi)
+        #I1[idx] = spgm1d.sincs2_intensity_pattern1D(x1, LL, N, phi)
+        I0[idx] = spgm1d.get_relativeIsincs2(x0, LL, N, phi)
+        I1[idx] = spgm1d.get_relativeIsincs2(x1, LL, N, phi)
+    return I0, I1
+    
 def zero_first_ordes_as_a_func_of_phi_wrap(phase_span, c2 = 4.16e-6):
     #building circular pupil mask 
     frameshape = (1152, 1920)
@@ -243,6 +259,20 @@ def show_expected_order_efficiency(phase_wrap=2*np.pi):
     plt.xlabel('$c_2[um]rms$')
     plt.ylabel(r'$\eta$') 
     
+def _get_phase_pattern_c2(c2=4.16e-6, phase_wrap=2*np.pi):
+    frameshape = (1152, 1920)
+    radius = 571
+    centeryx = (571, 875)
+    cmask_obj = CircularMask(frameshape, radius, centeryx)
+    #building a zernike over the pupil
+    zg = ZernikeGenerator(cmask_obj)
+    wf2display = np.zeros(frameshape)
+    wf2display = np.ma.array(data = wf2display, mask = cmask_obj.mask(), fill_value = 0)
+    Z2 = zg.getZernike(2)
+    wf2display = c2 * Z2
+    wrapped_phase = my_tools.convert_opd2wrapped_phase(wf2display, 635e-9, phase_wrap)
+    return wrapped_phase
+
 def simulating_pixelated_slm_structure1d(c2_m_rms):
     camshape =(1024,1360)
     d = 9.2e-6

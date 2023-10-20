@@ -140,7 +140,7 @@ class SteppedPhaseGratingModel1D():
     def __init__(self,
                  wl_in_m=635e-9,
                  incident_angle_in_deg=0,
-                 Dpe_in_m=10.53e-3,
+                 Dpe_in_m=10.5e-3,
                  focal_length_in_m=250e-3,
                  slm_pix_pitch_in_m=9.2e-6
                  ):
@@ -182,7 +182,13 @@ class SteppedPhaseGratingModel1D():
         I = cost2 * sin_ratio2 * sinc2
 
         return I
-
+    
+    def get_relativeIsincs2(self, x, spatial_period, Nsteps, phase_wrap):
+        
+        Itot = (spatial_period**2 / (self._wl * self._focal_length))**2
+        I = self.sincs2_intensity_pattern1D(x, spatial_period, Nsteps, phase_wrap)
+        return I/Itot
+    
     def get_sampling_points_from_comb(self, spatial_period, q):
 
         return q * self._wl * self._focal_length / spatial_period

@@ -305,5 +305,6 @@ def simulating_pixelated_slm_structure1d(c2_m_rms):
     plt.plot(xx, isinc2(xx), 'k.-')
     plt.plot(xq, isinc2(xq), 'ro')
     plt.xlabel('x axis [m]')
-    plt.ylabel('Intensity') 
+    plt.ylabel('Intensity')
+    plt.grid()
     

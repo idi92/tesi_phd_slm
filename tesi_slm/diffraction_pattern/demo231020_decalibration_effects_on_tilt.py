@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tesi_slm import demo230904_1d2dfft
+from tesi_slm.diffraction_pattern import demo230904_1d2dfft
 from scipy.interpolate import CubicSpline
 from astropy.io import fits
 

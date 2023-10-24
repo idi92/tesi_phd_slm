@@ -3,6 +3,8 @@ from astropy.modeling.fitting import LevMarLSQFitter
 from astropy.stats.funcs import gaussian_fwhm_to_sigma
 from astropy.modeling.functional_models import Gaussian2D
 from arte.types.mask import CircularMask
+from arte.utils.zernike_generator import ZernikeGenerator
+
 
 
 def cut_image_around_coord(image2D, yc, xc, halfside=25):
@@ -138,3 +140,20 @@ def get_circular_mask_obj(centerYX = (571, 875), RadiusInPixel = 571, frameshape
 
 def get_circular_mask(centerYX = (571, 875), RadiusInPixel = 571, frameshape=(1152, 1920)):
     return get_circular_mask_obj(centerYX, RadiusInPixel, frameshape).mask()
+
+def get_wf_as_zerike_combo(cmask_obj, zernike_coefficients_in_meters):
+    zernike_builder = ZernikeGenerator(cmask_obj)
+    image_to_display = np.zeros((1152,1920))
+    image_to_display = np.ma.array(data = image_to_display, mask = cmask_obj.mask(), fill_value = 0)
+    for j, aj in enumerate(zernike_coefficients_in_meters):
+        Zj = zernike_builder.getZernike(j + 2)
+        image_to_display += aj * Zj
+    return image_to_display
+
+def get_zernike_wf(cmask_obj, j, aj = 1):
+    zernike_builder = ZernikeGenerator(cmask_obj)
+    image_to_display = np.zeros((1152,1920))
+    image_to_display = np.ma.array(data = image_to_display, mask = cmask_obj.mask(), fill_value = 0)
+    Zj = zernike_builder.getZernike(j)
+    image_to_display = aj * Zj
+    return image_to_display

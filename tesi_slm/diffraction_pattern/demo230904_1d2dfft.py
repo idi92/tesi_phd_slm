@@ -1,6 +1,7 @@
 import numpy as np
-from tesi_slm.fft4slm_diffraction_patterns import DiffractionModel1D, DiffractionModel2D
-from tesi_slm import sharp_psf_on_camera, my_tools, slm_diffractive_model1D
+from tesi_slm.diffraction_pattern.fft4slm_diffraction_patterns import DiffractionModel1D, DiffractionModel2D
+from tesi_slm import sharp_psf_on_camera, my_tools
+from tesi_slm.diffraction_pattern import slm_diffractive_model1D
 import matplotlib.pyplot as plt
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator

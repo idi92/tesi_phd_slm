@@ -30,8 +30,12 @@ def lorenzo_example():
     short_exp_screens = psg.get_in_meters()
     #short_exp_screens.shape (10, 1920, 1920)
     wl = 500e-9
+    wl_lab = 633e-9
+    f_lab = 250e-3
+    Dpe_lab = 10.5e-3
+    pp_ccd = 4.65e-6
     airy_radius_in_arcsec  = 1.22*wl/Dpe/4.848e-6
-    airy_radius_in_px = 3.33 # diff limited spot on ccd
+    airy_radius_in_px = 1.22*wl_lab/Dpe_lab*f_lab/pp_ccd # diff limited spot on ccd
     pixel_size_on_sky = airy_radius_in_arcsec/airy_radius_in_px
     seeing_in_px = wl / r0_vis / 4.848e-6 / pixel_size_on_sky # seeing resolution in pixel
     

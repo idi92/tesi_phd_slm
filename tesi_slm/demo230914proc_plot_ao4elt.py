@@ -122,6 +122,21 @@ def sharpening_psf_histo():
     plt.ylim(-75,75)
     plt.legend(loc='best')
     plt.grid(ls='--',alpha = 0.3)
+    
+    plt.figure()
+    plt.clf()
+    dw = 0.5
+    dj = 0
+    plt.bar(j_index,coeff_z2_m10um/nm, width=dw ,align='center',color='g',label='c2 = -10 um rms')
+    plt.errorbar(j_index+dj, coeff_z2_m10um/nm, err_coeff_z2_m10um/nm, fmt='ko', ecolor ='k', linestyle='')
+    plt.xlabel('j index')
+    plt.xticks(j_index)
+    plt.ylabel('$c_j$'+'' '[nm rms]')
+    plt.xlim(4-0.5,11+0.5)
+    plt.ylim(-75,75)
+    plt.legend(loc='best')
+    plt.grid(ls='--',alpha = 0.3)
+    
 
 def ghost_lp_rot():
     # intensity measurements as a function of the LP rotation angle

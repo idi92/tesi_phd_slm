@@ -19,19 +19,19 @@ def lorenzo_example():
     
     plt.figure()
     plt.clf()
-    plt.imshow(sh_ima_slm, cmapl = 'jet')
+    plt.imshow(sh_ima_slm, cmap = 'jet')
     plt.colorbar()
     
     plt.figure()
     plt.clf()
-    plt.imshow(sh_ima_slm[1595:1818, 860:1205], cmapl = 'jet')
+    plt.imshow(sh_ima_slm[1595:1818, 860:1205], cmap= 'jet')
     plt.colorbar()
     
-    coeff_wf1 = [-10e-6, 0, 1e-6]
+    coeff_wf1 = [1e-6, 0, 1e-6]
     coeff_wf2 = [0]
     
-    wf1 = get_wf_as_zerike_combo(cmask_obj, [-10e-6, 0, 1e-6])
-    wf2 = get_wf_as_zerike_combo(cmask_obj, [0])
+    wf1 = get_wf_as_zerike_combo(cmask_obj, coeff_wf1)
+    wf2 = get_wf_as_zerike_combo(cmask_obj, coeff_wf2)
     
     e1=1*np.exp(1j*2*np.pi*wf1/633e-9)
     e2=1*np.exp(1j*2*np.pi*wf2/633e-9)

@@ -221,6 +221,24 @@ def diffraction_eff():
     plt.legend(loc='best')
     plt.grid(ls ='--', alpha = 0.5)
     
+    #Itot histogram to see loss of intensity
+    plt.figure()
+    plt.clf()
+    dw = 2.5
+    dj = 0
+    Itot = Im_spa_m + Ig_spa_m
+    errItot = np.sqrt(errIg_spa_m**2+errIg_spa_m**2)
+    plt.bar(c_span_m/1e-6, Itot, width=dw ,align='center',color='c',label='mod + ghost')
+    plt.errorbar(c_span_m/1e-6, Itot, errItot, fmt='ko', ecolor ='k', linestyle='')
+    plt.xlabel('$c_j$'+'' '[um rms]')
+    
+    plt.xticks(c_span_m/1e-6)
+    plt.ylim(0.75,1.1)
+    plt.ylabel('Normalized Total Intensity')
+    plt.legend(loc='best')
+    plt.grid(ls='--',alpha = 0.3)
+    
+    
     
 def get_best_coeff_from_psf_sharpening():
     fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\non_common_path_abs\\230911\\"

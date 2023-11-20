@@ -20,7 +20,7 @@ def main(c2 = 4.16e-6, fname='pippo.fits'):
     plt.plot(phase_span, I1_1d,'r-', label='$\eta_1$')
     plt.legend(loc='best')
     plt.grid('--', alpha=0.3)
-    plt.ylabel('$\eta_q$')
+    plt.ylabel('$\eta_q=I_q/I_{tot}$')
     plt.xlabel('$\phi_0 [rad]$')
     
     hdr = fits.Header()
@@ -45,5 +45,5 @@ def plot_eta_vs_phi(phase_span, I0, I1, I0_1d, I1_1d):
     plt.plot(phase_n, I1_1d,'r-', label='$\eta_1$')
     plt.legend(loc='best')
     plt.grid('--', alpha=0.3)
-    plt.ylabel('$\eta_q$')
+    plt.ylabel('$\eta_q=I_q/I_{tot}$')
     plt.xlabel('$\phi_0 [n\pi ]$')

@@ -98,3 +98,51 @@ def demo_lorenzo():
     b=clean_ima[470:500,1080:1110,39:42].sum(axis=(0,1))
     #a+b
     #array([39285.5, 32278.5, 36861.5])
+    
+def show_intenity_profiles_vs_time():
+    
+    fname = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\slm_time_response\\230929\\230929cubeima_flat_c2_20urms.fits"
+    fname_masters = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\camera_masters\\230908cma_masters_texp1.0ms.fits"
+    mh, md = my_tools.open_fits_file(fname_masters)
+    master_bias = md[0].data
+    master_background = md[1].data
+    hh,dd = my_tools.open_fits_file(fname)
+    cube_ima_raw = dd[0].data
+    clean_ima = my_tools.get_clean_cube_images(cube_ima_raw, master_bias, master_background)
+    
+    sumI0 = clean_ima[:,:,39].sum(axis=0)
+    max_sumI0 = sumI0.max() 
+    sumI0 = sumI0/max_sumI0
+    sumI1 = clean_ima[:,:,40].sum(axis=0)/max_sumI0
+    sumI2 = clean_ima[:,:,41].sum(axis=0)/max_sumI0
+    
+    import matplotlib.pyplot as plt
+    plt.figure(44)
+    plt.plot(clean_ima[:,:,41].sum(axis=0), label = '$t_2$')
+    plt.plot(clean_ima[:,:,39].sum(axis=0), label = '$t_0$')
+    plt.plot(clean_ima[:,:,40].sum(axis=0), label = '$t_1$')
+    plt.ylabel('Sum over frame columns Intesity profile [ADU]')
+    plt.xlabel('pixel')
+    plt.legend(loc='best')
+    plt.grid('--', alpha = 0.3)
+    
+    plt.subplots(3, 1, sharex=True, sharey = True)
+    plt.subplot(3,1,1)
+    plt.plot(sumI0, label='$t_0$')
+    #plt.xlabel('pixel')
+    #plt.ylabel('Normalized Intesity')
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha = 0.3)
+    plt.subplot(3,1,2)
+    plt.plot(sumI1, label='$t_1$')
+    #plt.xlabel('pixel')
+    plt.ylabel('Normalized Intesity Profile')
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha = 0.3)
+    plt.subplot(3,1,3)
+    plt.plot(sumI2, label='$t_2$')
+    plt.xlabel('pixel')
+    #plt.ylabel('Normalized Intesity')
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha = 0.3)
+ 

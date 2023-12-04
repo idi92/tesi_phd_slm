@@ -225,7 +225,7 @@ def show_pattern_of_double_sawtooth(LL1, LL2, wl = 635e-9, f  = 250e-3):
     plt.legend(loc='best')
     plt.title("$N_1 = %g$"%N1+'\t'+"$N_2=%g$"%N2+'\t\t'+"$<N>=%g$"%Nmean+'\t\t'+"$c_2$=%g m rms"%c2)
     
-def get_diffraction_pattern_of_stepped_grating(x, N, D=10.5e-3, wl = 635e-9, f  = 250e-3, phi = 2*np.pi):
+def get_diffraction_pattern_of_stepped_grating(x, N, D=10.5e-3, wl = 635e-9, f  = 250e-3, phi = 2*np.pi, showplot = False):
     
     cost = (D/(wl*f))**2
     arg_sinc1 = D*x/(wl*f) - 0.5 * phi/np.pi
@@ -233,9 +233,10 @@ def get_diffraction_pattern_of_stepped_grating(x, N, D=10.5e-3, wl = 635e-9, f  
     
     I = cost * (np.sinc(arg_sinc1) / np.sinc(arg_sinc2) * np.sinc(D*x/(N*wl*f)))**2
     
-    plt.figure()
-    plt.clf()
-    plt.plot(x,I,'k-')
+    if showplot is True:
+        plt.figure()
+        plt.clf()
+        plt.plot(x,I,'k-')
         
     return I
 
@@ -284,7 +285,7 @@ def show_deceff_for_sawtooth_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D=10.5e-3,
     M_arr = phi_wrap_arr/(2*np.pi)
     xmin = -3e-3
     xmax = 3e-3
-    x_span = np.linspace(xmin ,xmax, 3000)
+    x_span = np.linspace(xmin ,xmax, 10000)
     q = np.arange(-30, 31)
     
     xq_arr = np.zeros((len(phi_wrap_arr),len(q)))
@@ -308,8 +309,8 @@ def show_deceff_for_sawtooth_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D=10.5e-3,
         Ienv_norm = get_intensity_from_sawtooth(x_span, LL_arr[idx], phi_wrap_arr[idx], wl, f)/Itot_arr[idx] 
         plt.plot(x_span, Ienv_norm, color=color)
         plt.plot(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], 'o', color = color,label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+        #plt.bar(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], width=0.1e-3 ,align='center', color = color)
         
-        #plt.vlines(xq_arr[idx], ymin = 0, ymax = Iq_arr[idx]/Itot_arr[idx])
         
     dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
     plt.vlines(dx_tilt, 0, 1, colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
@@ -337,3 +338,121 @@ def show_deceff_for_sawtooth_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D=10.5e-3,
     plt.legend(loc = 'best')
     plt.grid('--', alpha=0.3)
     plt.title("Tilt as a sawtooth:" +"\t"+"$c_2$ = %g m rms"%c2_m_rms)
+    
+    return xq_arr, Iq_arr, Itot_arr
+    
+def get_intensity_envelope_from_steppedgrating(x, LL, phi = 2*np.pi, wl=635e-9, f=250e-3):
+    
+    cost2 = (LL*LL/(wl*f))**2
+    N = min(LL/9.2e-6, 256)
+    arg_sinc1 = LL*x/(wl*f) - 0.5*phi/np.pi
+    arg_sinc2 = arg_sinc1/N
+    arg_sinc3 = LL*x/(N*wl*f)
+    
+    I = cost2 * (np.sinc(arg_sinc1)/np.sinc(arg_sinc2)*np.sinc(arg_sinc3))**2
+    
+    return I
+    
+    
+    
+def show_deceff_for_steppedgrating_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D=10.5e-3, wl = 635e-9, f  = 250e-3):
+    
+    dm1d = DiffractionModel1D(wl, D, f)
+    
+    
+    #nominal spatial period of the sawtooth when wrapping at 2pi
+    LL0 = dm1d.get_sawtooth_spatial_period_from_c2(c2_m_rms, 2*np.pi)
+    
+    LL_arr = np.zeros(len(phi_wrap_arr))
+    M_arr = phi_wrap_arr/(2*np.pi)
+    xmin = -3e-3
+    xmax = 3e-3
+    x_span = np.linspace(xmin ,xmax, 10000)
+    q = np.arange(-30, 31)
+    
+    xq_arr = np.zeros((len(phi_wrap_arr),len(q)))
+    Iq_arr = np.zeros((len(phi_wrap_arr),len(q)))
+    Itot_arr = np.zeros(len(phi_wrap_arr))
+    
+    for idx, phi_wrap in enumerate(phi_wrap_arr):
+        #spatial period of the sawtooth when wrapping at phi_wrap
+        LL_arr[idx] = LL0*phi_wrap/(2*np.pi)
+        xq_arr[idx] = q * wl*f/LL_arr[idx]
+        Iq_arr[idx] = get_intensity_envelope_from_steppedgrating(xq_arr[idx], LL_arr[idx], phi_wrap, wl, f)
+        Itot_arr[idx] = (LL_arr[idx]*LL_arr[idx]/(wl*f))**2
+        
+    plt.figure()
+    plt.clf()
+    ax = plt.gca()
+    for idx in np.arange(len(phi_wrap_arr)):
+        color = next(ax._get_lines.prop_cycler)['color']
+        Ienv_norm = get_intensity_envelope_from_steppedgrating(x_span, LL_arr[idx], phi_wrap_arr[idx], wl, f)/Itot_arr[idx] 
+        plt.plot(x_span, Ienv_norm, color=color)
+        plt.plot(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], 'o', color = color,label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+        #plt.bar(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], width=0.1e-3 ,align='center', color = color)
+        
+        
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    plt.vlines(dx_tilt, 0, 1, colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(xmin,xmax)
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha=0.3)
+    plt.title("Tilt as a stepped grating:" +"\t"+"$c_2$ = %g m rms"%c2_m_rms)
+    
+    #histogram
+    plt.figure()
+    plt.clf()
+    ax = plt.gca()
+    for idx in np.arange(len(phi_wrap_arr)):
+        
+        color = next(ax._get_lines.prop_cycler)['color']
+        plt.bar(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], width=0.1e-3 ,align='center', color = color, label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+    
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    plt.vlines(dx_tilt, 0, 1, colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(xmin,xmax)
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha=0.3)
+    plt.title("Tilt as a stepped grating:" +"\t"+"$c_2$ = %g m rms"%c2_m_rms)
+    
+    return xq_arr, Iq_arr, Itot_arr
+
+def show_difference_between_sawtooth_and_stepped(c2_m_rms, phi_wrap_arr, D=10.5e-3, wl = 635e-9, f  = 250e-3):
+    
+    
+    xq_arr_saw, Iq_arr_saw, Itot_arr_saw = show_deceff_for_sawtooth_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D, wl, f)
+    xq_arr_step, Iq_arr_step, Itot_arr_step = show_deceff_for_steppedgrating_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D, wl, f)
+    
+    eta_q_step = np.zeros(Iq_arr_step.shape)
+    eta_q_saw = np.zeros(Iq_arr_saw.shape)
+    res = np.zeros(len(phi_wrap_arr))
+    for idx, phi in enumerate(phi_wrap_arr):
+        eta_q_saw[idx] = Iq_arr_saw[idx]/Itot_arr_saw[idx]
+        eta_q_step[idx] = Iq_arr_step[idx]/Itot_arr_step[idx]
+        res[idx] =  (eta_q_saw[idx] - eta_q_step[idx]).std()
+    
+    dm1d = DiffractionModel1D(wl, D, f)
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    M_arr = phi_wrap_arr/(2*np.pi)
+   
+    plt.figure()
+    plt.clf()
+    
+    for idx in range(len(phi_wrap_arr)):
+        plt.plot(xq_arr_saw[idx], eta_q_saw[idx] - eta_q_step[idx], label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+    
+    plt.vlines(dx_tilt,0,0.002 ,colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(-3e-3,3e-3)
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha=0.3)
+    return res
+    
+    
+    
+    

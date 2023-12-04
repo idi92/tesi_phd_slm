@@ -6,7 +6,7 @@ from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
 from tesi_slm import my_tools
 
-def show_maxima_and_minima_of_stebbed_grating(N, wl = 635e-9, f  = 250e-3, phase_wrap = 2*np.pi):
+def show_maxima_and_minima_of_stepped_grating(N, wl = 635e-9, f  = 250e-3, phase_wrap = 2*np.pi):
     
     spg = SteppedPhaseGratingModel1D()
     z = f
@@ -225,6 +225,115 @@ def show_pattern_of_double_sawtooth(LL1, LL2, wl = 635e-9, f  = 250e-3):
     plt.legend(loc='best')
     plt.title("$N_1 = %g$"%N1+'\t'+"$N_2=%g$"%N2+'\t\t'+"$<N>=%g$"%Nmean+'\t\t'+"$c_2$=%g m rms"%c2)
     
+def get_diffraction_pattern_of_stepped_grating(x, N, D=10.5e-3, wl = 635e-9, f  = 250e-3, phi = 2*np.pi):
     
+    cost = (D/(wl*f))**2
+    arg_sinc1 = D*x/(wl*f) - 0.5 * phi/np.pi
+    arg_sinc2 = D*x/(wl*f*N)
     
+    I = cost * (np.sinc(arg_sinc1) / np.sinc(arg_sinc2) * np.sinc(D*x/(N*wl*f)))**2
     
+    plt.figure()
+    plt.clf()
+    plt.plot(x,I,'k-')
+        
+    return I
+
+def get_intensity_from_sawtooth(x, LL, phi = 2*np.pi, wl=635e-9, f=250e-3):
+    
+    cost = (LL*LL/(wl*f))**2
+    arg_sinc = (LL * x /(wl*f)) - phi/(2*np.pi)
+    I = cost * np.sinc(arg_sinc)**2
+    return I
+    
+def show_decalibration_effect_for_a_sawtooth_as_tilt(c2_m_rms, phi_wrap = 2*np.pi, D=10.5e-3, wl = 635e-9, f  = 250e-3):
+    
+    dm1d = DiffractionModel1D()
+    
+    #nominal spatial period of the sawtooth when wrapping at 2pi
+    LL0 = dm1d.get_sawtooth_spatial_period_from_c2(c2_m_rms, 2*np.pi) 
+    #spatial period of the sawtooth when wrapping at phi_wrap
+    LL = LL0*phi_wrap/(2*np.pi)
+    
+    x_span = np.linspace(-3e-3 ,3e-3, 2000)
+    Ienv = get_intensity_from_sawtooth(x_span, LL, phi_wrap, wl, f)
+    
+    q = np.arange(-30, 31)
+    xq = q * wl*f/LL
+    Iq = get_intensity_from_sawtooth(xq, LL, phi_wrap, wl, f)
+    
+    Itot = (LL*LL/(wl*f))**2
+    M = phi_wrap/(2*np.pi)
+    plt.figure()
+    plt.clf()
+    plt.plot(x_span, Ienv/Itot, 'k-', label='envelope')
+    plt.plot(xq, Iq/Itot, 'ro', label = '$\phi_{wrap}/2\pi=%g$'%M)
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(-3e-3,3e-3)
+    plt.legend(loc = 'best')
+    
+def show_deceff_for_sawtooth_with_phiwrap_arr(c2_m_rms, phi_wrap_arr, D=10.5e-3, wl = 635e-9, f  = 250e-3):
+    
+    dm1d = DiffractionModel1D(wl, D, f)
+    
+    #nominal spatial period of the sawtooth when wrapping at 2pi
+    LL0 = dm1d.get_sawtooth_spatial_period_from_c2(c2_m_rms, 2*np.pi)
+     
+    LL_arr = np.zeros(len(phi_wrap_arr))
+    M_arr = phi_wrap_arr/(2*np.pi)
+    xmin = -3e-3
+    xmax = 3e-3
+    x_span = np.linspace(xmin ,xmax, 3000)
+    q = np.arange(-30, 31)
+    
+    xq_arr = np.zeros((len(phi_wrap_arr),len(q)))
+    Iq_arr = np.zeros((len(phi_wrap_arr),len(q)))
+    Itot_arr = np.zeros(len(phi_wrap_arr))
+    
+    for idx, phi_wrap in enumerate(phi_wrap_arr):
+        #spatial period of the sawtooth when wrapping at phi_wrap
+        LL_arr[idx] = LL0*phi_wrap/(2*np.pi)
+        xq_arr[idx] = q * wl*f/LL_arr[idx]
+        Iq_arr[idx] = get_intensity_from_sawtooth(xq_arr[idx], LL_arr[idx], phi_wrap, wl, f)
+        Itot_arr[idx] = (LL_arr[idx]*LL_arr[idx]/(wl*f))**2
+        
+        
+    
+    plt.figure()
+    plt.clf()
+    ax = plt.gca()
+    for idx in np.arange(len(phi_wrap_arr)):
+        color = next(ax._get_lines.prop_cycler)['color']
+        Ienv_norm = get_intensity_from_sawtooth(x_span, LL_arr[idx], phi_wrap_arr[idx], wl, f)/Itot_arr[idx] 
+        plt.plot(x_span, Ienv_norm, color=color)
+        plt.plot(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], 'o', color = color,label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+        
+        #plt.vlines(xq_arr[idx], ymin = 0, ymax = Iq_arr[idx]/Itot_arr[idx])
+        
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    plt.vlines(dx_tilt, 0, 1, colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(xmin,xmax)
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha=0.3)
+    plt.title("Tilt as a sawtooth:" +"\t"+"$c_2$ = %g m rms"%c2_m_rms)
+    
+    #histogram
+    plt.figure()
+    plt.clf()
+    ax = plt.gca()
+    for idx in np.arange(len(phi_wrap_arr)):
+        
+        color = next(ax._get_lines.prop_cycler)['color']
+        plt.bar(xq_arr[idx], Iq_arr[idx]/Itot_arr[idx], width=0.1e-3 ,align='center', color = color, label = '$\phi_{wrap}/2\pi=%g$'%M_arr[idx])
+    
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    plt.vlines(dx_tilt, 0, 1, colors='black',linestyle ='dashed',label = '$\Delta x_{psf}$')
+    plt.ylabel('Normalized intensity')
+    plt.xlabel('position [m]')
+    plt.xlim(xmin,xmax)
+    plt.legend(loc = 'best')
+    plt.grid('--', alpha=0.3)
+    plt.title("Tilt as a sawtooth:" +"\t"+"$c_2$ = %g m rms"%c2_m_rms)

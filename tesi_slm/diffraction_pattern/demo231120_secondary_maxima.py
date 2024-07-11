@@ -452,7 +452,41 @@ def show_difference_between_sawtooth_and_stepped(c2_m_rms, phi_wrap_arr, D=10.5e
     plt.legend(loc = 'best')
     plt.grid('--', alpha=0.3)
     return res
+
+def get_intensity_envelope_from_steppedgrating_comb(x, LL, phi = 2*np.pi, D = 10.5e-3, wl=635e-9, f=250e-3):
     
+    qmax = int(0.5 * D/(wl*f/LL))
+    q = np.arange(-qmax,qmax+1)
+    xq = q * wl*f/LL
+    I = np.zeros(len(x))
+    for idx in range(len(x)):
+        if (np.isclose(x[idx],xq, atol=1e-10).sum() == 1):
+            I[idx] = get_intensity_envelope_from_steppedgrating(x[idx], LL, phi, wl, f)
+        else:
+            I[idx] = 0
+    return I
     
+def show_intensity_from_stepped_grating_in_finite_aperture(c2_m_rms, D=10.5e-3, phi = 2*np.pi, wl=635e-9, f=250e-3):
     
+    dm1d = DiffractionModel1D(wl, D, f)
+    dx_tilt = dm1d.get_tilted_psf_displacement(c2_m_rms)
+    #nominal spatial period of the sawtooth when wrapping at 2pi
+    LL0 = dm1d.get_sawtooth_spatial_period_from_c2(c2_m_rms, 2*np.pi)
+    LL = LL0 * phi/ (2*np.pi)
+    M = 0.5 * phi /np.pi
+    # q = np.arange(-30, 31)
+    # xq = q * wl*f/(LL)
+    x = np.linspace(-D*0.5, 0.5*D, 1000000)
+    Istep = get_intensity_envelope_from_steppedgrating_comb(x, LL, phi, D, wl, f)
+    Iaper = (D * np.sinc(D*x/(wl*f)))**2
+    I = np.convolve(Istep,  Iaper, 'same')
     
+    plt.figure()
+    plt.clf()
+    plt.plot(x,I, 'k-',label="$\phi/2\pi=%g$"%M)
+    plt.vlines(dx_tilt, 0, I.max(), colors='black', linestyles='dashed', label='$\Delta x_{psf}$')
+    #plt.plot(xq, Istep, 'ro', label='order')
+    plt.legend(loc='best')
+    plt.grid('--', alpha=0.3)
+    plt.ylabel('Intensity')
+    plt.xlabel('position [m]')

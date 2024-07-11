@@ -157,3 +157,16 @@ def get_zernike_wf(cmask_obj, j, aj = 1):
     Zj = zernike_builder.getZernike(j)
     image_to_display = aj * Zj
     return image_to_display
+
+def open_8bitmap(fname_bitmap):
+    from PIL import Image
+    bmp_image = Image.open(fname_bitmap)
+    gray_map = np.array(bmp_image, dtype=np.uint8)
+    return gray_map
+
+def get_wrapped_wf_from_bmp_file(fname, wl = 635e-9):
+
+    gray_map = open_8bitmap(fname)
+    wrapped_wf_map = wl/256 * gray_map
+    cmd_vector = np.reshape(wrapped_wf_map, (1920*1152))
+    return cmd_vector

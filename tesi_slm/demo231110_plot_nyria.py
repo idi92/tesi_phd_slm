@@ -110,11 +110,39 @@ def show_plot_shwfs_examples(fname_shwfs_ima):
     tot_coeff = dd[1].data
     best_coeff = dd[2].data
     bias4 = dd[3].data
-    coeff2applay = dd[4].data
+    coeff2apply = dd[4].data
+    
+    
+    print("File Name: %s"%fname_shwfs_ima)
+    # print("\nfits header:")
+    # print(hh)
+    print("\ntot coeff:")
+    print(tot_coeff)
+    print("\nbest_coeff:")
+    print(best_coeff)
+    print("\ndefocus bias:")
+    print(bias4)
+    print("\ncoeff2apply:")
+    print(coeff2apply)
+    
+    Imin = shwfs_ima.min()
+    Imax = shwfs_ima.max()
+    plt.figure()
+    plt.clf()
+    plt.hist(shwfs_ima[350:1940,400:1910].ravel(),bins=range(int(Imax)), fc='k', ec='k')
+    
+    cmin=200 # background
+    cmax = 1500
     
     plt.figure()
     plt.clf()
-    plt.imshow(shwfs_ima[1000:1250,950:1350])#, cmap = 'jet')
-    #plt.colorbar()
+    plt.imshow(shwfs_ima[350:1940,400:1910], cmap='Greys_r', clim = (cmin, cmax))
+    plt.colorbar(label='ADU')
+    plt.title(fname_shwfs_ima)
+    plt.figure()
+    plt.clf()
+    plt.imshow(shwfs_ima[1510:1790,778:1115], cmap = 'Greys_r', clim = (cmin, cmax))#clim = (Imin, 1.75*Imax)) #vmin = Imin, vmax = Imax)#[1000:1250,950:1350]
+    plt.colorbar(label='ADU')
+    plt.title(fname_shwfs_ima)
     
     

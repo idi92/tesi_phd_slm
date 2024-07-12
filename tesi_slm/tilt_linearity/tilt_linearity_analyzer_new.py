@@ -1,6 +1,6 @@
 import numpy as np 
 from tesi_slm.tilt_linearity_on_camera import TiltedPsfMeasurer
-from tesi_slm.my_tools import cut_image_around_coord, \
+from tesi_slm.utils.my_tools import cut_image_around_coord, \
     get_index_from_image, execute_gaussian_fit_on_image, get_index_from_array
 from scipy.optimize import curve_fit
 from astropy.units import pix

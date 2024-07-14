@@ -3,7 +3,7 @@
 	<name>tesi_phd_slm</name>
 	<comment></comment>
 	<projects>
-		<project>git_arte</project>
+		<project>arte</project>
 		<project>plico</project>
 		<project>plico_dm_server</project>
 		<project>pysilico</project>

@@ -62,8 +62,8 @@ def main():
         "DATA_BAUDO": baudo
     }
 
-    fpath = "C:\\Users\\edoar\\Desktop\\pytrash\\"
-    fname = fpath + "example240714_smartsaveandloadV2.fits"
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\pytrash\\"
+    fname = fpath + "prova240715_fits_io.fits"
 
     #par_dict = {}
     #data_dict = {}

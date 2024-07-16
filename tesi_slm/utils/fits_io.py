@@ -72,7 +72,7 @@ def read_info(fname):
         print(repr(hdul[0].header))
 
 
-def load(fname, displayInfo=False):
+def load(fname, displayInfo=False, memory_map = False):
     """
     Load data and associated metadata from a FITS file.
 
@@ -90,7 +90,7 @@ def load(fname, displayInfo=False):
 
     """
 
-    with fits.open(fname, memmap=False) as hdul:
+    with fits.open(fname, memmap = memory_map) as hdul:
 
         if displayInfo is not False:
             print("\nFile INFO:\n")
@@ -115,8 +115,7 @@ def load(fname, displayInfo=False):
 
         else:
             # Access the non-masked array data
-            data_from_fits = hdul['DATA'].data
-            dataCube = np.array(data_from_fits)
+            dataCube = hdul['DATA'].data
             idx = 2  # Starting index for additional HDUs
 
         # Access the additional 1D arrays from HDUs
@@ -126,5 +125,8 @@ def load(fname, displayInfo=False):
 
     hdul.close()
     hdul = None
-
-    return dataCube, header_dict, vector_dict
+    
+    if memory_map is True:
+        return dataCube.copy(), header_dict.copy(), vector_dict.copy()
+    else:
+        return dataCube, header_dict, vector_dict

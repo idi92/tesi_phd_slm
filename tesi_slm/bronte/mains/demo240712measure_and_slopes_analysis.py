@@ -10,7 +10,40 @@ from arte.types.slopes import Slopes
 from arte.utils.modal_decomposer import ModalDecomposer
 from arte.utils.rebin import rebin
 
+from tesi_slm.utils import fits_io
+import datetime as date
+    
 
+
+
+    
+def main240716_acquire_wf_measurments(fname, type_data = 'WFS RAW', texp = 4.5, Nframes = 100):
+    
+    
+    shwfs = create_shwfs_device()
+    #texp = 4.5
+    shwfs.setExposureTime(texp)
+    fps = shwfs.getFrameRate()
+    #Nframes = 100
+    dataCube = acquire_image_from_shwfs(shwfs, texp, Nframes)
+    
+    
+    header_dict = {
+        "DATE" : str(date.datetime.today()),
+        "TYP_DATA" : type_data,
+        "CAM" : 'MANTA G419',
+        "DEV" : 'SHWFS',
+        "TEXP_MS" : texp,
+        "FPS" : fps,
+        "ON_PUPIL" : 'MIRROR WL/20',
+        "D_EP_MM" : 10.5,
+        "WL_NM" : 633
+    }
+    
+    vector_dict={}
+    
+    fits_io.save(fname, dataCube, header_dict, vector_dict)
+    
 def create_shwfs_device():
     shwfs = camera('localhost', 7110)
     return shwfs
@@ -26,7 +59,6 @@ def save_shwfs_ima(fname, ima, texp):
     hdr = fits.Header()
     hdr['T_EX_MS'] = texp
     fits.writeto(fname, ima, hdr)
-    
 
 def load_ima(fname):
     header = fits.getheader(fname)

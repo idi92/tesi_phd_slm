@@ -20,11 +20,15 @@ def demo_subaperture_setup():
     frame = _load_file()
     
     _show_map(frame)
-    
+    plt.title("Selected frame")
     pixel_size = 5.5e-6 
     lens_size = 144e-6
+    f3 = 150e-3
+    f2 = 250e-3
+    fla = 6.925e-3
+    alpha_max = 0.5 * f3/f2 * lens_size/fla
     pixel_per_sub = int(lens_size/pixel_size)
-    frame_shape = frame.shape
+   
     
     Nsub = 50
     
@@ -52,11 +56,44 @@ def demo_subaperture_setup():
     sc.remove_low_flux_subaps(threshold=45000)
     _show_map(sc.subapertures_map()*1000+sc.frame())
     _show_map(sc.subapertures_flux_map())
-
-def _load_file():
     
-    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240716_bronte_subaperture_setting\\"
-    fname = fpath + "240716shwfs_pupil_red.fits"
+    _show_map(sc.slopes_y_map()*alpha_max)
+    plt.title("Slopes Y [rad]")
+    
+    _show_map(sc.slopes_x_map()*alpha_max)
+    plt.title("Slopes X [rad]")
+    
+    #some values are close to 1 could be an issue on circular mask?
+    _show_map(sc.subapertures_weights_map())
+    
+    
+    md = ModalDecomposer(100)
+    mask = CircularMask((50, 50))
+    
+    dd = rebin(sc.subapertures_weights_map()[408:408+50*26,355:355+50*26],(50,50))
+    #values close to 1 are set to False
+    # in maska
+    maska = (1-np.array(np.round(dd), dtype = np.int)).astype(bool)
+    
+    #convertion from normalized unit to radiants
+    slopex_comp = sc.slopes()[:, 0]*alpha_max
+    slopey_comp = sc.slopes()[:, 1]*alpha_max
+    
+    sl = Slopes(slopex_comp, slopey_comp, maska)
+    
+    # use modal decomposer
+    zc = md.measureZernikeCoefficientsFromSlopes(sl, mask, BaseMask(maska))
+    plt.figure()
+    plt.clf()
+    plt.plot(np.arange(100)+2, zc.toNumpyArray())
+    plt.ylabel("Zernike coefficients cj")
+    plt.xlabel("Zernike index j")
+    
+def _load_file(fname = None):
+    if fname is None:
+    
+        fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240716_bronte_subaperture_setting\\"
+        fname = fpath + "240716shwfs_pupil_red.fits"
     
     frame, header_dict, vector_dict = fits_io.load(fname) 
     
@@ -81,6 +118,7 @@ def _define_subaperute_set(frame, ybll = 400, xbll = 360, Nsub = 50, pixel_per_s
     sc = PCSlopeComputer(subaps)
     sc.set_frame(frame)
     _show_map(sc.subapertures_map()*1000+sc.frame())
+    plt.title("Initialized Subaperture Grid")
     
     return subaps, sc
 
@@ -88,3 +126,4 @@ def _shift_subaperture_grid(subaps, sc, subshiftYX=[0,0]):
     
     subaps.shiftSubap(subaps.keys(), subshiftYX)
     _show_map(sc.subapertures_map()*1000 + sc.frame())
+    plt.title("Grid Shifted")

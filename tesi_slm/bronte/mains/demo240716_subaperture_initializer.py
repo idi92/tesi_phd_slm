@@ -22,7 +22,7 @@ def demo_subaperture_setup():
     _show_map(frame)
     plt.title("Selected frame")
     pixel_size = 5.5e-6 
-    lens_size = 144e-6
+    lens_size = 144e-6 #pixel_size*26#
     f3 = 150e-3
     f2 = 250e-3
     fla = 6.925e-3
@@ -68,9 +68,10 @@ def demo_subaperture_setup():
     
     
     md = ModalDecomposer(100)
-    mask = CircularMask((50, 50))
+    n_sub = 48
+    mask = CircularMask((n_sub, n_sub))
     
-    dd = rebin(sc.subapertures_weights_map()[408:408+50*26,355:355+50*26],(50,50))
+    dd = rebin(sc.subapertures_weights_map()[408:408+n_sub*26,355:355+n_sub*26],(n_sub,n_sub))
     #values close to 1 are set to False
     # in maska
     maska = (1-np.array(np.round(dd), dtype = np.int)).astype(bool)

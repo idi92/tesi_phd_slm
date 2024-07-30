@@ -118,8 +118,8 @@ def acquire_device_master_bkgs():
     master_bkg_sh = np.median(shDataCube, axis=2)
     
     fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\camera_bkgs\\"
-    fname_cam = "240729cam_bkg_master.fits"
-    fname_sh = "240729shwfs_bkg_master.fits"
+    fname_cam = "240730cam_bkg_master.fits"
+    fname_sh = "240730shwfs_bkg_master.fits"
     
     fits_io.save(fpath + fname_cam, master_bkg_cam, header_dict_cam_bkg, {})
     fits_io.save(fpath + fname_sh, master_bkg_sh, header_dict_shwfs_bkg, {})

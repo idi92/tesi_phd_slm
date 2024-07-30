@@ -31,7 +31,7 @@ def get_baricenter_from_dataCube(dataCube, roi_size = 20):
     This works only if the dataCube is related to a PSF in a fixed position
     if the dataCube contains shifted psf the selected roi becames wrong
     if the psf is fixed the roi must be fixed as well for all the repeated frames
-    to have consisyency in the baricenter measurements
+    to have consistency in the baricenter measurements
     """
     dataCube[dataCube<0] = 0
     Nframes = dataCube.shape[-1]
@@ -73,33 +73,34 @@ def get_baricenter_from_frame(frame, roi_size = 20):
 
 def main_cam_data_red():
     
-    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\KM100TSM1_AdjusterX_Tip\\"
-    #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\KM100TSM1_AdjusterY_Tilt\\"
+    #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterX_Tip\\"
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterY_Tilt\\"
     
     fpath_bkg = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\camera_bkgs\\"
-    fname_cam_bkg = "240717cam_bkg_master_afternoon.fits"
+    fname_cam_bkg = "240730cam_bkg_master.fits"
     
     bkg, b, c = fits_io.load(fpath_bkg+fname_cam_bkg)
     
-    fname_cam_list = [
-    
-         "240717cam_AdjX_Nrev0_reference_raws.fits",
-         "240717cam_AdjX_Nrev0.125_raws.fits",
-         "240717cam_AdjX_Nrev0.250_raws.fits",
-         #"240717cam_AdjX_Nrev0.375_raws.fits",
-         "240717cam_AdjX_Nrev0.500_raws.fits",
-         "240717cam_AdjX_Nrev0.625_raws.fits",
-         "240717cam_AdjX_Nrev0.750_raws.fits"]
-    Nrev = np.array([0, 0.125, 0.25, 0.5, 0.625, 0.75])
-    
     # fname_cam_list = [
     #
-    #     "240717cam_AdjY_Nrev0.000_raws.fits",
-    #     "240717cam_AdjY_Nrev0.125_raws.fits",
-    #     "240717cam_AdjY_Nrev0.250_raws.fits",
-    #     "240717cam_AdjY_Nrev0.375_raws.fits"
-    # ]
-    # Nrev = np.array([0, 0.125, 0.25, 0.375])
+    #      "240730cam_AdjX_Nrev0000_raws.fits",
+    #      "240730cam_AdjX_Nrev0125_raws.fits",
+    #      "240730cam_AdjX_Nrev0250_raws.fits",
+    #      "240730cam_AdjX_Nrev0375_raws.fits",
+    #      "240730cam_AdjX_Nrev0500_raws.fits",
+    #      "240730cam_AdjX_Nrev0625_raws.fits",
+    #      "240730cam_AdjX_Nrev0750_raws.fits"]
+    # Nrev = np.array([0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75])
+    #
+
+    fname_cam_list = [
+    
+        "240730cam_AdjY_Nrev0000_raws.fits",
+        "240730cam_AdjY_Nrev0125_raws.fits",
+        "240730cam_AdjY_Nrev0250_raws.fits",
+        "240730cam_AdjY_Nrev0375_raws.fits"
+    ]
+    Nrev = np.array([0, 0.125, 0.25, 0.375])
 
     frame_shape = bkg.shape
     RedFrameCube = np.zeros((*frame_shape,len(fname_cam_list)))
@@ -115,8 +116,8 @@ def main_cam_data_red():
         RedFrameCube[:,:,idx] = redFrame
     
     fpath_red ="C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\" 
-    fname_red_data = fpath_red +  "red_data\\240717tilted_psf_on_camera_adjX.fits"
-    #fname_red_data = fpath_red +  "red_data\\240717tilted_psf_on_camera_adjY.fits"
+    #fname_red_data = fpath_red +  "red_data\\240730tilted_psf_on_camera_adjX.fits"
+    fname_red_data = fpath_red +  "red_data\\240730tilted_psf_on_camera_adjY.fits"
     
     today = d["DATE"]
     texp_cam = d["TEXP_MS"]
@@ -124,8 +125,8 @@ def main_cam_data_red():
     
     header_dict = {
         "DATE" : today,
-        "TYP_DATA" : "TILTED PSF RED CUBE - ADJ-X",
-        #"TYP_DATA" : "TILTED PSF RED CUBE - ADJ-Y",
+        #"TYP_DATA" : "TILTED PSF RED CUBE - ADJ-X",
+        "TYP_DATA" : "TILTED PSF RED CUBE - ADJ-Y",
         "CAM" : 'GC1350M',
         "DEV" : 'CAMERA',
         "TEXP_MS" : texp_cam,
@@ -143,35 +144,36 @@ def main_cam_data_red():
     
 def main_shwfs_data_red():
     
-    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\KM100TSM1_AdjusterX_Tip\\"
-    #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\KM100TSM1_AdjusterY_Tilt\\"
+    #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterX_Tip\\"
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterY_Tilt\\"
     
     fpath_bkg = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\camera_bkgs\\"
-    fname_shwfs_bkg = "240717shwfs_bkg_master_afternoon.fits"
+    fname_shwfs_bkg = "240730shwfs_bkg_master.fits"
     
     bkg, b, c = fits_io.load(fpath_bkg+fname_shwfs_bkg)
     
-    fname_shwfs_list = [
-        "240717shwfs_AdjX_Nrev0_reference_raws.fits",
-        "240717shwfs_AdjX_Nrev0.125_raws.fits",
-        "240717shwfs_AdjX_Nrev0.250_raws.fits",
-        #"240717shwfs_AdjX_Nrev0.375_raws.fits",
-        "240717shwfs_AdjX_Nrev0.500_raws.fits",
-        "240717shwfs_AdjX_Nrev0.625_raws.fits",
-        "240717shwfs_AdjX_Nrev0.750_raws.fits"
-        ]
-    
-    Nrev = np.array([0, 0.125, 0.25, 0.5, 0.625, 0.75])
-    
     # fname_shwfs_list = [
+    #     "240730shwfs_AdjX_Nrev0000_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0125_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0250_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0375_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0500_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0625_raws.fits",
+    #     "240730shwfs_AdjX_Nrev0750_raws.fits"
+    #     ]
     #
-    #     "240717shwfs_AdjY_Nrev0.000_raws.fits",
-    #     "240717shwfs_AdjY_Nrev0.125_raws.fits",
-    #     "240717shwfs_AdjY_Nrev0.250_raws.fits",
-    #     "240717shwfs_AdjY_Nrev0.375_raws.fits"
-    # ]
-    # Nrev = np.array([0, 0.125, 0.25, 0.375])
+    # Nrev = np.array([0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75])
+    #
+
+    fname_shwfs_list = [
     
+         "240730shwfs_AdjY_Nrev0000_raws.fits",
+         "240730shwfs_AdjY_Nrev0125_raws.fits",
+         "240730shwfs_AdjY_Nrev0250_raws.fits",
+         "240730shwfs_AdjY_Nrev0375_raws.fits"
+     ]
+    Nrev = np.array([0, 0.125, 0.25, 0.375])
+   
     frame_shape = bkg.shape
     RedFrameCube = np.zeros((*frame_shape,len(fname_shwfs_list)))
   
@@ -183,8 +185,8 @@ def main_shwfs_data_red():
         RedFrameCube[:,:,idx] = redFrame
     
     fpath_red ="C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\" 
-    fname_red_data = fpath_red + "red_data\\240717shwfs_tilt_calib_adjX.fits"
-    #fname_red_data = fpath_red + "red_data\\240717shwfs_tilt_calib_adjY.fits"
+    #fname_red_data = fpath_red + "red_data\\240730shwfs_tilt_calib_adjX.fits"
+    fname_red_data = fpath_red + "red_data\\240730shwfs_tilt_calib_adjY.fits"
     
     today = d["DATE"]
     texp_shwfs = d["TEXP_MS"]
@@ -192,8 +194,8 @@ def main_shwfs_data_red():
     
     header_dict = {
         "DATE" : today,
-        "TYP_DATA" : "SHWFS RED CUBE - ADJ-X",
-        #"TYP_DATA" : "SHWFS RED CUBE - ADJ-Y",
+        #"TYP_DATA" : "SHWFS RED CUBE - ADJ-X",
+        "TYP_DATA" : "SHWFS RED CUBE - ADJ-Y",
         "CAM" : 'MANTA G419',
         "DEV" : 'SHWFS',
         "TEXP_MS" : texp_shwfs,

@@ -142,10 +142,11 @@ class SubapertureGridInitialiser():
         plt.clf()
         plt.imshow(frame)
         plt.colorbar()
-        
-def main():
-    
-    wf_ref = get_wf_reference()
+
+
+def main(wf_ref=None):
+    if wf_ref is None:
+        wf_ref = get_wf_reference()
     pixel_per_sub = 26
     Nsub = 50
     sgi = SubapertureGridInitialiser(wf_ref, pixel_per_sub, Nsub)
@@ -167,3 +168,4 @@ def main():
     sgi.show_subaperture_flux_map()
     sgi.show_subaperture_grid()
     sgi.show_slopes_maps()
+    return sgi

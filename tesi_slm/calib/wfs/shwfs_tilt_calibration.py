@@ -64,6 +64,11 @@ class SubapertureGridInitialiser():
         self.show_subaperture_grid()
         plt.title(f"Grid Shift: Y, X = [{grid_shiftYX[0]} , {grid_shiftYX[1]}]")
     
+    def update_subapertures_threshold(self, threshold):
+        
+        for i in self._subaps.values():
+            i.setFixThreshold(threshold)
+    
     def remove_low_flux_subaperturers(self, threshold = None):
         
         self._sc.remove_low_flux_subaps(threshold)
@@ -109,7 +114,7 @@ class SubapertureGridInitialiser():
         plt.subplot(1, 2, 2)
         plt.title("Slope Y")
         plt.imshow(self._sc.slopes_y_map(), vmin = vmin, vmax = vmax)
-        plt.colorbar(label='Normalized Slopes')
+        plt.colorbar(label='Slopes units')
         
     @property
     def get_wf_reference(self):

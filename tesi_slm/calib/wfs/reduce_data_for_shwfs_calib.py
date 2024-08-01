@@ -145,10 +145,10 @@ def main_cam_data_red():
 def main_shwfs_data_red():
     
     #fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterX_Tip\\"
-    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\KM100TSM1_AdjusterY_Tilt\\"
+    fpath = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\raw_data\\SLM\\"
     
     fpath_bkg = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\camera_bkgs\\"
-    fname_shwfs_bkg = "240730shwfs_bkg_master.fits"
+    fname_shwfs_bkg = "240801shwfs_bkg_master.fits"
     
     bkg, b, c = fits_io.load(fpath_bkg+fname_shwfs_bkg)
     
@@ -167,13 +167,13 @@ def main_shwfs_data_red():
 
     fname_shwfs_list = [
     
-         "240730shwfs_AdjY_Nrev0000_raws.fits",
-         "240730shwfs_AdjY_Nrev0125_raws.fits",
-         "240730shwfs_AdjY_Nrev0250_raws.fits",
-         "240730shwfs_AdjY_Nrev0375_raws.fits"
+         "240801shwfs_tilt_ptv000wl.fits",
+         "240801shwfs_tilt_ptv_m015wl.fits",
+         "240801shwfs_tilt_ptv_m050wl.fits",
+         "240801shwfs_tilt_ptv_m100wl.fits"
      ]
-    Nrev = np.array([0, 0.125, 0.25, 0.375])
-   
+    #Nrev = np.array([0, 0.125, 0.25, 0.375])
+    ptv_wl_arr = np.array([0, -15, -50, -100])
     frame_shape = bkg.shape
     RedFrameCube = np.zeros((*frame_shape,len(fname_shwfs_list)))
   
@@ -184,9 +184,9 @@ def main_shwfs_data_red():
         redFrame[redFrame<0] = 0
         RedFrameCube[:,:,idx] = redFrame
     
-    fpath_red ="C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\" 
+    fpath_red ="C:\\Users\\labot\\Desktop\\misure_tesi_slm\\shwfs_calibration\\240717_tilt_linearity_on_subapertures\\data\\red_data\\SLM\\" 
     #fname_red_data = fpath_red + "red_data\\240730shwfs_tilt_calib_adjX.fits"
-    fname_red_data = fpath_red + "red_data\\240730shwfs_tilt_calib_adjY.fits"
+    fname_red_data = fpath_red + "240801shwfs_tilt_slm_blink.fits"
     
     today = d["DATE"]
     texp_shwfs = d["TEXP_MS"]
@@ -195,18 +195,20 @@ def main_shwfs_data_red():
     header_dict = {
         "DATE" : today,
         #"TYP_DATA" : "SHWFS RED CUBE - ADJ-X",
-        "TYP_DATA" : "SHWFS RED CUBE - ADJ-Y",
+        "TYP_DATA" : "SHWFS RED CUBE - SLM",
         "CAM" : 'MANTA G419',
         "DEV" : 'SHWFS',
         "TEXP_MS" : texp_shwfs,
         "FPS" : fps_shwfs,
     }
     vector_dict = {
-        "NREV" : Nrev
+        #"NREV" : Nrev
+        "PTV_WL": ptv_wl_arr
+        
         }
     
     fits_io.save(fname_red_data, RedFrameCube, header_dict, vector_dict)
     
-    return RedFrameCube, Nrev
+    return RedFrameCube, ptv_wl_arr
         
     

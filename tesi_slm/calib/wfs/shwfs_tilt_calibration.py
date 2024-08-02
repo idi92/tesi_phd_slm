@@ -51,19 +51,42 @@ class SubapertureGridInitialiser():
         self._sc = PCSlopeComputer(self._subaps)
         self._sc.set_frame(self._wf_ref)
     
-    def shift_subaperture_grid(self, grid_shiftYX=[0,0]):
-        
+    def shift_subaperture_grid_with_memory(self, grid_shiftYX=[0, 0]):
+        '''
+        maybe useless
+        '''
+
         if self._last_grid_shiftYX is not None:
-            reset_shiftYX=[-self._last_grid_shiftYX[0], -self._last_grid_shiftYX[1]]
+            reset_shiftYX = [-self._last_grid_shiftYX[0], -
+                             self._last_grid_shiftYX[1]]
             self._subaps.shiftSubap(self._subaps.keys(), reset_shiftYX)
-        
+
         self._last_grid_shiftYX = grid_shiftYX
-        
+
         self._subaps.shiftSubap(self._subaps.keys(), grid_shiftYX)
-        #self._last_grid_shiftYX = grid_shiftYX
+        # self._last_grid_shiftYX = grid_shiftYX
+        self.show_subaperture_grid()
+        plt.title(
+            f"Grid Shift: Y, X = [{grid_shiftYX[0]} , {grid_shiftYX[1]}]")
+
+    def shift_subaperture_grid(self, grid_shiftYX=[0, 0]):
+
+        self._subaps.shiftSubap(self._subaps.keys(), grid_shiftYX)
         self.show_subaperture_grid()
         plt.title(f"Grid Shift: Y, X = [{grid_shiftYX[0]} , {grid_shiftYX[1]}]")
-    
+
+    def shift_subaperture_grid_to_null_tilt(self):
+        offset_x = 42
+        offset_y = 42
+
+        while offset_x != 0 or offset_y != 0:
+            offset_y = round(self._sc.slopes()[
+                             :, 1].mean()/2*self._pixel_per_sub)
+            offset_x = round(self._sc.slopes()[
+                             :, 0].mean()/2*self._pixel_per_sub)
+            self.shift_subaperture_grid([offset_y, offset_x])
+            self._sc._reset_all_computed_attributes()
+
     def update_subapertures_threshold(self, threshold):
         
         for i in self._subaps.values():
@@ -149,7 +172,7 @@ class SubapertureGridInitialiser():
         plt.colorbar()
 
 
-def main(wf_ref=None):
+def main(wf_ref=None, flux_threshold=57000):
     if wf_ref is None:
         wf_ref = get_wf_reference()
     pixel_per_sub = 26
@@ -164,11 +187,10 @@ def main(wf_ref=None):
     
     sgi.show_subaperture_grid()
     
-    sgi.shift_subaperture_grid([7, 8])
+    sgi.shift_subaperture_grid_to_null_tilt()
     
     sgi.show_subaperture_flux_histogram()
-    
-    flux_threshold = 57000
+
     sgi.remove_low_flux_subaperturers(flux_threshold)
     sgi.show_subaperture_flux_map()
     sgi.show_subaperture_grid()

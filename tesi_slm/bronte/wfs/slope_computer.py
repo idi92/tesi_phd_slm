@@ -24,7 +24,7 @@ class PCSlopeComputer():
         self.CCD_HEIGHT_IN_PIXEL = list(subapertureSet.values())[0].ccdy
         self.CCD_WIDTH_IN_PIXEL = list(subapertureSet.values())[0].ccdx
         self._threValidSubap = 0.3
-        self._dark = np.zeros((self.CCD_HEIGHT_IN_PIXEL,
+        self._background = np.zeros((self.CCD_HEIGHT_IN_PIXEL,
                               self.CCD_WIDTH_IN_PIXEL))
         self._flat = np.ones(
             (self.CCD_HEIGHT_IN_PIXEL, self.CCD_WIDTH_IN_PIXEL))
@@ -42,6 +42,7 @@ class PCSlopeComputer():
         self._slopesdict = None
         self._momentdict = None
 
+    @property
     def subapertures(self):
         return self._subapSet
 
@@ -65,7 +66,12 @@ class PCSlopeComputer():
         '''
         Assume all subapertures have the same size.
         '''
-        self._subapSizeInPx = list(self._subapSet.values())[0].size()
+        # TODO check that every subaperture has the same size
+        self._subaperture_size_in_px = list(self._subapSet.values())[0].size()
+
+    @property
+    def subaperture_size(self):
+        return self._subaperture_size_in_px
 
     def number_of_subaps_in_pupil(self):
         return self._numberOfSubapsInPupil
@@ -115,8 +121,8 @@ class PCSlopeComputer():
         self._rawframe = rawFrame
         self.set_frame(self.compute_processed_frame(self._rawframe))
 
-    def upload_dark_frame(self, dark):
-        self._dark = dark
+    def upload_background_frame(self, backgroundFrame):
+        self._background = backgroundFrame
 
     def upload_common_mode_map(self, cmmap):
         self._common_mode = cmmap
@@ -128,19 +134,19 @@ class PCSlopeComputer():
         self._common_mode_threshold = threshold
 
     def compute_processed_frame(self, rawima):
-        self._dark_corrected = (rawima.astype(np.int32) -
-                                self._dark.astype(np.int32)).astype(np.float32)
+        self._background_corrected = (rawima.astype(np.int32) -
+                                      self._background.astype(np.int32)).astype(np.float32)
         # cm_correction= self.common_mode_correction(
-        #                 self._dark_corrected, self._common_mode,
+        #                 self._background_corrected, self._common_mode,
         #                 self._common_mode_threshold)
-        # self._cm_corrected= self._dark_corrected - cm_correction
-        processedFrame = self._dark_corrected / self._flat
+        # self._cm_corrected= self._background_corrected - cm_correction
+        processedFrame = self._background_corrected / self._flat
         return processedFrame
 
     def frame_correction_info(self):
         ret = {}
         ret['raw_frame'] = self._rawframe
-        ret['dark_corrected'] = self._dark_corrected
+        ret['background_corrected'] = self._background_corrected
         # ret['cm_corrected']= self._cm_corrected
         ret['flat_corrected'] = self._frame
         return ret
@@ -273,7 +279,7 @@ class PCSlopeComputer():
         sf = np.zeros(self.frame().size, dtype=float)
         for i in self._subapSet.values():
             pl = i.pixelList()
-            sz = int(self._subapSizeInPx)
+            sz = int(self.subaperture_size)
             sf[pl[0:sz]] = 1
             sf[pl[sz*(sz-1):]] = 1
             sf[pl[sz:sz*(sz-1):sz]] = 1
@@ -283,7 +289,7 @@ class PCSlopeComputer():
     def _compute_slopes(self):
         self._slopesdict = {}
 
-        (sy, sx) = (self._subapSizeInPx, self._subapSizeInPx)
+        (sy, sx) = (self.subaperture_size, self.subaperture_size)
         x = np.linspace(-1 + 1. / sx, 1 - 1. / sx, sx)
         y = np.linspace(-1 + 1. / sy, 1 - 1. / sy, sy)
         xm = np.repeat(x[np.newaxis, :], sy, axis=0).flatten()
@@ -330,7 +336,7 @@ class PCSlopeComputer():
             px_values = flattenFrame[i.pixelList()]
             px_values = np.clip(px_values, 0, 1e10)
             subap = px_values.reshape(
-                (self._subapSizeInPx, self._subapSizeInPx))
+                (self.subaperture_size, self.subaperture_size))
             moments = ImageMoments(subap)
 
 #            amplitude= moments.central_moment(0, 0)

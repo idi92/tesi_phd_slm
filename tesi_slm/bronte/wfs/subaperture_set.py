@@ -463,7 +463,7 @@ class ShSubapertureSet(dict):
             s = ShSubaperture(ID[i],
                               # WfsID[i],
                               px[:, i],
-                              det_shape[i],
+                              det_shape[:, i],
                               suba_size[i],
                               we[:, i],
                               fixT[i],

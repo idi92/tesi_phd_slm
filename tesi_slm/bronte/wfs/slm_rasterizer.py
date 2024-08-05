@@ -31,6 +31,8 @@ class SlmRasterizer:
         for y in zernike_coefficients.zernikeIndexes():
             wfz += zernike_coefficients.getZ([y]) * \
                 self._zernike_generator.getZernike(y)
+                
+        wfz.fill_value = 0
         return wfz
 
     def reshape_map2vector(self, array2d, length=2211840, method='C'):

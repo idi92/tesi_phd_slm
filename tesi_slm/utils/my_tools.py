@@ -141,21 +141,20 @@ def get_circular_mask_obj(centerYX = (571, 875), RadiusInPixel = 571, frameshape
 def get_circular_mask(centerYX = (571, 875), RadiusInPixel = 571, frameshape=(1152, 1920)):
     return get_circular_mask_obj(centerYX, RadiusInPixel, frameshape).mask()
 
-def get_wf_as_zerike_combo(cmask_obj, zernike_coefficients_in_meters):
+def get_wf_as_zernike_combo(cmask_obj, zernike_coefficients_in_meters):
     zernike_builder = ZernikeGenerator(cmask_obj)
-    image_to_display = np.zeros((1152,1920))
-    image_to_display = np.ma.array(data = image_to_display, mask = cmask_obj.mask(), fill_value = 0)
+    image_to_display = np.ma.zeros((1152,1920))
     for j, aj in enumerate(zernike_coefficients_in_meters):
         Zj = zernike_builder.getZernike(j + 2)
         image_to_display += aj * Zj
+    image_to_display.fill_value = 0
     return image_to_display
 
 def get_zernike_wf(cmask_obj, j, aj = 1):
     zernike_builder = ZernikeGenerator(cmask_obj)
-    image_to_display = np.zeros((1152,1920))
-    image_to_display = np.ma.array(data = image_to_display, mask = cmask_obj.mask(), fill_value = 0)
     Zj = zernike_builder.getZernike(j)
     image_to_display = aj * Zj
+    image_to_display.fill_value = 0
     return image_to_display
 
 def open_8bitmap(fname_bitmap):

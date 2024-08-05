@@ -312,6 +312,10 @@ class ShSubapertureSet(dict):
                 if idx in self:
                     del self[idx]
 
+    def update_fix_threshold(self, threshold):
+        for i in self.values():
+            i.setFixThreshold(threshold)
+
     def shiftSubap(self, subapID, deltaXY):
         '''
         subapID is a vector of subapIDs or a scalar.

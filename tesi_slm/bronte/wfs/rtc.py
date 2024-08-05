@@ -14,9 +14,10 @@ class ScaoRealTimeComputer:
         self._md = modal_decomposer
         self._controller = controller
         self._slm_rasterizer = slm_rasterizer
+        self.reset_modal_offset()
+        self.reset_wavefront_disturb()
 
         self.pupil_radius = 5.25e-3
-
         # geometric factor for 10.5mm pupil and lab setup at 240731
         self._slope_unit_2_rad = 6.23e-3
 
@@ -49,7 +50,27 @@ class ScaoRealTimeComputer:
         # use modal decomposer
         zc = self._md.measureZernikeCoefficientsFromSlopes(
             sl, self._zernike_mask, BaseMask(self._subap_mask))
-        return zc
+        return zc-self.modal_offset
+
+    def set_modal_offset(self, zernike_modal_offset):
+        self._zc_offset = zernike_modal_offset
+
+    def reset_modal_offset(self):
+        self._zc_offset = ZernikeCoefficients(np.zeros(1, dtype=float))
+
+    @property
+    def modal_offset(self):
+        return self._zc_offset
+
+    def set_wavefront_disturb(self, wavefront_disturb_raster):
+        self._wf_disturb = wavefront_disturb_raster
+
+    @property
+    def wavefront_disturb(self):
+        return self._wf_disturb
+
+    def reset_wavefront_disturb(self):
+        self._wf_disturb = np.zeros((1152, 1920), dtype=int)
 
     def step(self):
         # Acquire frame
@@ -66,4 +87,4 @@ class ScaoRealTimeComputer:
             ZernikeCoefficients.fromNumpyArray(zc_filtered))
         # apply on slm
         self._dm.set_shape(
-            self._slm_rasterizer.reshape_map2vector(slm_raster))
+            self._slm_rasterizer.reshape_map2vector(slm_raster+self.wavefront_disturb))

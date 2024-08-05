@@ -2,25 +2,36 @@ import numpy as np
 from tesi_slm.calib.wfs import shwfs_tilt_calibration
 import matplotlib.pyplot as plt
 from arte.types.zernike_coefficients import ZernikeCoefficients
+import time
+import logging
 
 
-def define_subap_set(shwfs, slm):
+def define_subap_set(shwfs, slm, flux_threshold=100000):
     '''
     used to save subapertures 240802_122800
     '''
     slm.set_shape(np.zeros(1152*1920))
     wf_ref = shwfs.getFutureFrames(1, 20).toNumpyArray()
-    sgi = shwfs_tilt_calibration.main(wf_ref, flux_threshold=110000)
-    return sgi._subaps
+    sgi = shwfs_tilt_calibration.main(wf_ref, flux_threshold=flux_threshold)
+    return sgi
 
 
 class TestAoLoop:
+    SLM_RESPONSE_TIME = 0.005
 
     def __init__(self, factory):
         self._factory = factory
+        self._logger = logging.getLogger("TestAoLoop")
+
+    def loop(self, how_many=10):
+        for i in range(how_many):
+            self._logger.info("loop %d/%d" % (i+1, how_many))
+            self.step()
+            self.display()
 
     def step(self):
         self._factory.rtc.step()
+        time.sleep(self.SLM_RESPONSE_TIME)
 
     def display(self):
 

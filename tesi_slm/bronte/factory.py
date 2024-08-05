@@ -14,7 +14,7 @@ from tesi_slm.bronte.wfs.temporal_controller import PureIntegrator
 
 
 class BronteFactory():
-    SUBAPS_TAG = '240802_122800'
+    SUBAPS_TAG = '240805_191000'  # '240802_122800'
 
     def __init__(self):
         self._set_up_basic_logging()

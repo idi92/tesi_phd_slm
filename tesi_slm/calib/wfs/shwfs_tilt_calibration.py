@@ -31,12 +31,13 @@ def get_wf_reference():
     
 class SubapertureGridInitialiser():
     
-    def __init__(self, wf_reference, pixel_per_sub, Nsub):
+    def __init__(self, wf_reference, pixel_per_sub, Nsub, centroid_threshold=0):
         
         self._wf_ref = wf_reference
         self._pixel_per_sub = int(pixel_per_sub)
         self._Nsub = int(Nsub)
         self._last_grid_shiftYX = None
+        self._centroid_threshold = centroid_threshold
         
     def define_subaperture_set(self, ybll = 400, xbll = 350):
         
@@ -48,6 +49,8 @@ class SubapertureGridInitialiser():
         self._subaps = ShSubapertureSet.createMinimalSet(
             np.arange(self._Nsub*self._Nsub), frame_shape, self._pixel_per_sub, bll)
     
+        self._subaps.update_fix_threshold(self._centroid_threshold)
+
         self._sc = PCSlopeComputer(self._subaps)
         self._sc.set_frame(self._wf_ref)
     
@@ -176,13 +179,14 @@ def main(wf_ref=None, flux_threshold=57000):
     if wf_ref is None:
         wf_ref = get_wf_reference()
     pixel_per_sub = 26
-    Nsub = 50
-    sgi = SubapertureGridInitialiser(wf_ref, pixel_per_sub, Nsub)
+    Nsub = 78  # 50
+    sgi = SubapertureGridInitialiser(
+        wf_ref, pixel_per_sub, Nsub, centroid_threshold=70)
     
     sgi.show_reference_wf()
     #top left coords to be fair
-    ybll = 400
-    xbll = 350
+    ybll = 0  # 400
+    xbll = 0  # 350
     sgi.define_subaperture_set(ybll, xbll)
     
     sgi.show_subaperture_grid()

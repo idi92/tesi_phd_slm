@@ -11,7 +11,7 @@ class SlmRasterizer:
 
     @cached_property
     def slm_pupil_mask(self):
-        centerYX = (571, 875)
+        centerYX = (581, 875)
         RadiusInPixel = 571
         frameshape = (1152, 1920)
         cmask = CircularMask(

@@ -2,12 +2,15 @@ from functools import cached_property
 import numpy as np
 from arte.types.mask import CircularMask
 from arte.utils.zernike_generator import ZernikeGenerator
+import logging
+from arte.utils.decorator import logEnterAndExit
 
 
 class SlmRasterizer:
 
     def __init__(self):
         self._zernike_generator = ZernikeGenerator(self.slm_pupil_mask)
+        self._logger = logging.getLogger("SlmRasterizer")
 
     @cached_property
     def slm_pupil_mask(self):
@@ -20,6 +23,8 @@ class SlmRasterizer:
             maskCenter=centerYX)
         return cmask
 
+    @logEnterAndExit("Converting zernike coefficients to slm map",
+                     "Zernike coefficients converted to slm map", level='debug')
     def zernike_coefficients_to_raster(self, zernike_coefficients):
         '''
         Convert a ZernikeCoefficients object to a wavefront raster
@@ -29,8 +34,9 @@ class SlmRasterizer:
             data=np.zeros((1152, 1920)), mask=self.slm_pupil_mask.mask(), fill_value=0)
 
         for y in zernike_coefficients.zernikeIndexes():
-            wfz += zernike_coefficients.getZ([y]) * \
-                self._zernike_generator.getZernike(y)
+            coeff = zernike_coefficients.getZ([y])
+            if coeff != 0:
+                wfz += coeff * self._zernike_generator.getZernike(y)
                 
         wfz.fill_value = 0
         return wfz

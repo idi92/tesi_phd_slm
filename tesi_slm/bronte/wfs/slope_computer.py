@@ -1,7 +1,8 @@
 import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
-
+from arte.utils.decorator import logEnterAndExit
+import logging
 
 class PCSlopeComputer():
 
@@ -20,6 +21,7 @@ class PCSlopeComputer():
     '''
 
     def __init__(self, subapertureSet):
+        self._logger = logging.getLogger('PCSlopeComputer')
         self.set_subapertures(subapertureSet)
         self.CCD_HEIGHT_IN_PIXEL = list(subapertureSet.values())[0].ccdy
         self.CCD_WIDTH_IN_PIXEL = list(subapertureSet.values())[0].ccdx
@@ -286,6 +288,7 @@ class PCSlopeComputer():
             sf[pl[2*sz-1:sz*(sz-1):sz]] = 1
         return sf.reshape(self.frame().shape)
 
+    @logEnterAndExit("Computing slopes", "Slopes computed", level='debug')
     def _compute_slopes(self):
         self._slopesdict = {}
 

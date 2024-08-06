@@ -3,7 +3,8 @@ from arte.types.mask import BaseMask, CircularMask
 from arte.types.slopes import Slopes
 from arte.utils.rebin import rebin
 from arte.types.zernike_coefficients import ZernikeCoefficients
-
+import logging
+from arte.utils.decorator import logEnterAndExit
 
 class ScaoRealTimeComputer:
 
@@ -14,6 +15,7 @@ class ScaoRealTimeComputer:
         self._md = modal_decomposer
         self._controller = controller
         self._slm_rasterizer = slm_rasterizer
+        self._logger = logging.getLogger("ScaoRealTimeComputer")
         self.reset_modal_offset()
         self.reset_wavefront_disturb()
 
@@ -40,6 +42,7 @@ class ScaoRealTimeComputer:
         mask = CircularMask((n_subap_b_t, n_subap_l_r))
         return maska, mask
 
+    @logEnterAndExit("Computing Zernike coefficients...", "Zernike coefficients computed", level='debug')
     def _compute_zernike_coefficients(self):
         # create Slopes object in rad
         sl = Slopes(self._sc.slopes()[:, 0]*self._slope_unit_2_rad * self.pupil_radius,
@@ -72,6 +75,7 @@ class ScaoRealTimeComputer:
     def reset_wavefront_disturb(self):
         self._wf_disturb = np.zeros((1152, 1920), dtype=int)
 
+    @logEnterAndExit("Stepping...", "Stepped", level='debug')
     def step(self):
         # Acquire frame
         wfs_frame = self._wfs_camera.getFutureFrames(1, 1).toNumpyArray()

@@ -25,3 +25,7 @@ def snapshot_folder():
 
 def subaperture_set_folder():
     return data_root_dir() / "subaperture_set"
+
+
+def phase_screen_folder():
+    return data_root_dir() / "phase_screens"

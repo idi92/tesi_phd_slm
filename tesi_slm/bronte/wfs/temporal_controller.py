@@ -6,6 +6,7 @@ class PureIntegrator:
         self._gain = -0.5
 
     def process_delta_command(self, delta_command):
+        self._last_delta_command = delta_command
         self._command += delta_command * self._gain
         return self._command
 

@@ -14,7 +14,7 @@ setup(name='tesi_phd_slm',
           'plico',
           'pysilico',
           'numpy',
-          'arte',
+          'arte > 0.17.0',
           'astropy'
       ],
       package_data={

@@ -5,8 +5,8 @@ from arte.utils.zernike_generator import ZernikeGenerator
 import pysilico
 from plico_dm import deformableMirror
 from astropy.io import fits
-from tesi_slm.camera_masters import CameraMastersAnalyzer
-from tesi_slm.my_tools import clean_cube_images,\
+from tesi_slm.utils.camera_masters import CameraMastersAnalyzer
+from tesi_slm.utils.my_tools import clean_cube_images,\
  cut_image_around_coord, get_index_from_array
 
 

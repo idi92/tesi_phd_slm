@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tesi_slm import my_tools
+from tesi_slm.utils import my_tools
 from astropy.io import fits
 
 def sharped_and_unsharped_psf(fname):
@@ -36,13 +36,13 @@ def sharped_and_unsharped_psf(fname):
     plt.colorbar(label='Log scale')
 
 def difference_between_plico_and_blink():
-    from tesi_slm import demo230407_difference_blink_spoc
+    from tesi_slm.demos import demo230407_difference_blink_spoc
     fname_blink = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\230403\\z6_c6_2um_r569_y550_x853_bmp_blink.fits.bmp"
     fname_spoc = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\230403\\z6_c6_2um_r569_y550_x853_bmp.fits"
     demo230407_difference_blink_spoc.main(fname_blink, fname_spoc)
     
 def tilt_linearity():
-    from tesi_slm import tilt_linearity_analyzer_new
+    from tesi_slm.tilt_linearity import tilt_linearity_analyzer_new
     
     fname_z2 = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\230414\\again\\230414tpm_red_z2_v4.fits"
     fname_z3 = "C:\\Users\\labot\\Desktop\\misure_tesi_slm\\230414\\again\\230414tpm_red_z3_v4.fits"
